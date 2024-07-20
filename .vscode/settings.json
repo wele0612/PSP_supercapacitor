@@ -1,0 +1,17 @@
+{
+    "cortex-debug.variableUseNaturalFormat": true,
+    "files.associations": {
+        "*.inc": "8051",
+        "ws2812.h": "c",
+        "math.h": "c",
+        "main.h": "c",
+        "motors.h": "c",
+        "stdint.h": "c",
+        "stdint-gcc.h": "c",
+        "jdy40.h": "c",
+        "coil.h": "c",
+        "adc.h": "c",
+        "battery.h": "c",
+        "pwrctl.h": "c"
+    }
+}
