@@ -118,7 +118,8 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
-  {
+  { 
+    __HAL_HRTIM_SetCompare(&hhrtim1, HRTIM_TIMERINDEX_MASTER, HRTIM_COMPAREUNIT_1, 500);
     HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
     HAL_Delay(250);
     /* USER CODE END WHILE */
