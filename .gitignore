@@ -1,0 +1,8 @@
+build
+/.vscode/launch.json
+
+
+*.o
+*.lst
+*.hex
+*.d
