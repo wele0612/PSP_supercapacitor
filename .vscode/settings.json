@@ -12,6 +12,8 @@
         "coil.h": "c",
         "adc.h": "c",
         "battery.h": "c",
-        "pwrctl.h": "c"
+        "pwrctl.h": "c",
+        "fdcan.h": "c",
+        "hrtim.h": "c"
     }
 }
