@@ -1,17 +1,28 @@
 #include "dcdc.h"
 
 void dcdc_init(){
-    HAL_HRTIM_WaveformOutputStart(&hhrtim1, HRTIM_OUTPUT_TA1);
-    HAL_HRTIM_WaveformOutputStart(&hhrtim1, HRTIM_OUTPUT_TA2);
+    LL_HRTIM_EnableOutput(HRTIM1, LL_HRTIM_OUTPUT_TA1);
+    LL_HRTIM_EnableOutput(HRTIM1, LL_HRTIM_OUTPUT_TA2);
 
-    HAL_HRTIM_WaveformOutputStart(&hhrtim1, HRTIM_OUTPUT_TB1);
-    HAL_HRTIM_WaveformOutputStart(&hhrtim1, HRTIM_OUTPUT_TB2);
+    LL_HRTIM_EnableOutput(HRTIM1, LL_HRTIM_OUTPUT_TB1);
+    LL_HRTIM_EnableOutput(HRTIM1, LL_HRTIM_OUTPUT_TB2);
 
-    HAL_HRTIM_WaveformOutputStart(&hhrtim1, HRTIM_OUTPUT_TE1);
-    HAL_HRTIM_WaveformOutputStart(&hhrtim1, HRTIM_OUTPUT_TE2);
+    LL_HRTIM_EnableOutput(HRTIM1, LL_HRTIM_OUTPUT_TE1);
+    LL_HRTIM_EnableOutput(HRTIM1, LL_HRTIM_OUTPUT_TE2);
 
-    HAL_HRTIM_WaveformOutputStart(&hhrtim1, HRTIM_OUTPUT_TF1);
-    HAL_HRTIM_WaveformOutputStart(&hhrtim1, HRTIM_OUTPUT_TF2);
+    LL_HRTIM_EnableOutput(HRTIM1, LL_HRTIM_OUTPUT_TF1);
+    LL_HRTIM_EnableOutput(HRTIM1, LL_HRTIM_OUTPUT_TF2);
+    // HAL_HRTIM_WaveformOutputStart(&hhrtim1, HRTIM_OUTPUT_TA1);
+    // HAL_HRTIM_WaveformOutputStart(&hhrtim1, HRTIM_OUTPUT_TA2);
+
+    // HAL_HRTIM_WaveformOutputStart(&hhrtim1, HRTIM_OUTPUT_TB1);
+    // HAL_HRTIM_WaveformOutputStart(&hhrtim1, HRTIM_OUTPUT_TB2);
+
+    // HAL_HRTIM_WaveformOutputStart(&hhrtim1, HRTIM_OUTPUT_TE1);
+    // HAL_HRTIM_WaveformOutputStart(&hhrtim1, HRTIM_OUTPUT_TE2);
+
+    // HAL_HRTIM_WaveformOutputStart(&hhrtim1, HRTIM_OUTPUT_TF1);
+    // HAL_HRTIM_WaveformOutputStart(&hhrtim1, HRTIM_OUTPUT_TF2);
 
     dcdc_setphase(0.0f);
     dcdc_setduty(20.0f);
@@ -31,11 +42,16 @@ void dcdc_setphase(float percentage){
     V2 -> F(4)
     C2 -> A(1)
     */
-    __HAL_HRTIM_SetCompare(&hhrtim1, HRTIM_TIMERINDEX_MASTER, HRTIM_COMPAREUNIT_3, phaseA);
-    __HAL_HRTIM_SetCompare(&hhrtim1, HRTIM_TIMERINDEX_MASTER, HRTIM_COMPAREUNIT_2, phaseAsh);
+   LL_HRTIM_TIM_SetCompare3(HRTIM1, LL_HRTIM_TIMER_MASTER, phaseA);
+   LL_HRTIM_TIM_SetCompare2(HRTIM1, LL_HRTIM_TIMER_MASTER, phaseAsh);
 
-    __HAL_HRTIM_SetCompare(&hhrtim1, HRTIM_TIMERINDEX_MASTER, HRTIM_COMPAREUNIT_4, phaseB);
-    __HAL_HRTIM_SetCompare(&hhrtim1, HRTIM_TIMERINDEX_MASTER, HRTIM_COMPAREUNIT_1, phaseBsh);
+   LL_HRTIM_TIM_SetCompare4(HRTIM1, LL_HRTIM_TIMER_MASTER, phaseB);
+   LL_HRTIM_TIM_SetCompare1(HRTIM1, LL_HRTIM_TIMER_MASTER, phaseBsh);
+    // __HAL_HRTIM_SetCompare(&hhrtim1, HRTIM_TIMERINDEX_MASTER, HRTIM_COMPAREUNIT_3, phaseA);
+    // __HAL_HRTIM_SetCompare(&hhrtim1, HRTIM_TIMERINDEX_MASTER, HRTIM_COMPAREUNIT_2, phaseAsh);
+
+    // __HAL_HRTIM_SetCompare(&hhrtim1, HRTIM_TIMERINDEX_MASTER, HRTIM_COMPAREUNIT_4, phaseB);
+    // __HAL_HRTIM_SetCompare(&hhrtim1, HRTIM_TIMERINDEX_MASTER, HRTIM_COMPAREUNIT_1, phaseBsh);
     return;
 }
 
@@ -61,11 +77,17 @@ void dcdc_setduty(float duty){
     int comp_right=toCompareVal(rightduty);
     comp_right=checkCompVal(comp_right);
 
-    __HAL_HRTIM_SETCOMPARE(&hhrtim1, HRTIM_TIMERINDEX_TIMER_E, HRTIM_COMPAREUNIT_1,comp_left);
-    __HAL_HRTIM_SETCOMPARE(&hhrtim1, HRTIM_TIMERINDEX_TIMER_F, HRTIM_COMPAREUNIT_1,comp_left);
+    LL_HRTIM_TIM_SetCompare1(HRTIM1, LL_HRTIM_TIMER_E, comp_left);
+    LL_HRTIM_TIM_SetCompare1(HRTIM1, LL_HRTIM_TIMER_F, comp_left);
 
-    __HAL_HRTIM_SETCOMPARE(&hhrtim1, HRTIM_TIMERINDEX_TIMER_A, HRTIM_COMPAREUNIT_1,comp_right);
-    __HAL_HRTIM_SETCOMPARE(&hhrtim1, HRTIM_TIMERINDEX_TIMER_B, HRTIM_COMPAREUNIT_1,comp_right);
+    LL_HRTIM_TIM_SetCompare1(HRTIM1, LL_HRTIM_TIMER_A, comp_right);
+    LL_HRTIM_TIM_SetCompare1(HRTIM1, LL_HRTIM_TIMER_B, comp_right);
+
+    // __HAL_HRTIM_SETCOMPARE(&hhrtim1, HRTIM_TIMERINDEX_TIMER_E, HRTIM_COMPAREUNIT_1,comp_left);
+    // __HAL_HRTIM_SETCOMPARE(&hhrtim1, HRTIM_TIMERINDEX_TIMER_F, HRTIM_COMPAREUNIT_1,comp_left);
+
+    // __HAL_HRTIM_SETCOMPARE(&hhrtim1, HRTIM_TIMERINDEX_TIMER_A, HRTIM_COMPAREUNIT_1,comp_right);
+    // __HAL_HRTIM_SETCOMPARE(&hhrtim1, HRTIM_TIMERINDEX_TIMER_B, HRTIM_COMPAREUNIT_1,comp_right);
 }
 
 int checkCompVal(int val){

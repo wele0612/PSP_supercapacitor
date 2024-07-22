@@ -17,7 +17,7 @@ typedef struct pwr_adc_t{
     uint16_t i_bus;     //ADC2_IN5 (PC4)
     uint16_t v_cap;     //ADC2_IN12(PB2)
     uint16_t i_fw2;     //ADC3_IN12(PB0)
-    uint16_t i_fw1;     //ADC3_IN12(PB2)
+    uint16_t i_fw1;     //ADC3_IN1 (PB1)
 }pwr_adc_t;
 
 #define VOFA_TAIL {0x00, 0x00, 0x80, 0x7f}

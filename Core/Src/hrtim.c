@@ -24,8 +24,6 @@
 
 /* USER CODE END 0 */
 
-HRTIM_HandleTypeDef hhrtim1;
-
 /* HRTIM1 init function */
 void MX_HRTIM1_Init(void)
 {
@@ -34,271 +32,290 @@ void MX_HRTIM1_Init(void)
 
   /* USER CODE END HRTIM1_Init 0 */
 
-  HRTIM_TimeBaseCfgTypeDef pTimeBaseCfg = {0};
-  HRTIM_TimerCfgTypeDef pTimerCfg = {0};
-  HRTIM_CompareCfgTypeDef pCompareCfg = {0};
-  HRTIM_TimerCtlTypeDef pTimerCtl = {0};
-  HRTIM_DeadTimeCfgTypeDef pDeadTimeCfg = {0};
-  HRTIM_OutputCfgTypeDef pOutputCfg = {0};
+  LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
+  /* Peripheral clock enable */
+  LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_HRTIM1);
 
   /* USER CODE BEGIN HRTIM1_Init 1 */
 
   /* USER CODE END HRTIM1_Init 1 */
-  hhrtim1.Instance = HRTIM1;
-  hhrtim1.Init.HRTIMInterruptResquests = HRTIM_IT_NONE;
-  hhrtim1.Init.SyncOptions = HRTIM_SYNCOPTION_NONE;
-  if (HAL_HRTIM_Init(&hhrtim1) != HAL_OK)
-  {
-    Error_Handler();
+  LL_HRTIM_ConfigDLLCalibration(HRTIM1, LL_HRTIM_DLLCALIBRATION_MODE_CONTINUOUS, LL_HRTIM_DLLCALIBRATION_RATE_3);
+
+  /* Poll for DLL end of calibration */
+#if (USE_TIMEOUT == 1)
+  uint32_t Timeout = 10; /* Timeout Initialization */
+#endif  /*USE_TIMEOUT*/
+
+  while(LL_HRTIM_IsActiveFlag_DLLRDY(HRTIM1) == RESET){
+#if (USE_TIMEOUT == 1)
+    if (LL_SYSTICK_IsActiveCounterFlag())  /* Check Systick counter flag to decrement the time-out value */
+    {
+        if(Timeout-- == 0)
+        {
+          Error_Handler();  /* error management */
+        }
+    }
+#endif  /* USE_TIMEOUT */
   }
-  if (HAL_HRTIM_DLLCalibrationStart(&hhrtim1, HRTIM_CALIBRATIONRATE_3) != HAL_OK)
-  {
-    Error_Handler();
+
+  LL_HRTIM_ConfigADCTrig(HRTIM1, LL_HRTIM_ADCTRIG_1, LL_HRTIM_ADCTRIG_UPDATE_MASTER, LL_HRTIM_ADCTRIG_SRC13_MPER);
+  LL_HRTIM_SetADCPostScaler(HRTIM1, LL_HRTIM_ADCTRIG_1, 0x0);
+  LL_HRTIM_TIM_SetPrescaler(HRTIM1, LL_HRTIM_TIMER_MASTER, LL_HRTIM_PRESCALERRATIO_MUL32);
+  LL_HRTIM_TIM_SetCounterMode(HRTIM1, LL_HRTIM_TIMER_MASTER, LL_HRTIM_MODE_CONTINUOUS);
+  LL_HRTIM_TIM_SetPeriod(HRTIM1, LL_HRTIM_TIMER_MASTER, 15542);
+  LL_HRTIM_TIM_SetRepetition(HRTIM1, LL_HRTIM_TIMER_MASTER, 0x00);
+  LL_HRTIM_TIM_DisableHalfMode(HRTIM1, LL_HRTIM_TIMER_MASTER);
+  LL_HRTIM_TIM_SetInterleavedMode(HRTIM1, LL_HRTIM_TIMER_MASTER, LL_HRTIM_INTERLEAVED_MODE_DISABLED);
+  LL_HRTIM_TIM_DisableStartOnSync(HRTIM1, LL_HRTIM_TIMER_MASTER);
+  LL_HRTIM_TIM_DisableResetOnSync(HRTIM1, LL_HRTIM_TIMER_MASTER);
+  LL_HRTIM_TIM_SetDACTrig(HRTIM1, LL_HRTIM_TIMER_MASTER, LL_HRTIM_DACTRIG_NONE);
+  LL_HRTIM_TIM_EnablePreload(HRTIM1, LL_HRTIM_TIMER_MASTER);
+  LL_HRTIM_TIM_SetUpdateGating(HRTIM1, LL_HRTIM_TIMER_MASTER, LL_HRTIM_UPDATEGATING_INDEPENDENT);
+  LL_HRTIM_TIM_SetUpdateTrig(HRTIM1, LL_HRTIM_TIMER_MASTER, LL_HRTIM_UPDATETRIG_REPETITION);
+  LL_HRTIM_TIM_SetBurstModeOption(HRTIM1, LL_HRTIM_TIMER_MASTER, LL_HRTIM_BURSTMODE_MAINTAINCLOCK);
+  LL_HRTIM_ForceUpdate(HRTIM1, LL_HRTIM_TIMER_MASTER);
+  LL_HRTIM_TIM_SetCompare1(HRTIM1, LL_HRTIM_TIMER_MASTER, 1000);
+  LL_HRTIM_TIM_SetCompare2(HRTIM1, LL_HRTIM_TIMER_MASTER, 3000);
+  LL_HRTIM_TIM_SetCompare3(HRTIM1, LL_HRTIM_TIMER_MASTER, 5000);
+  LL_HRTIM_TIM_SetCompare4(HRTIM1, LL_HRTIM_TIMER_MASTER, 7000);
+
+  /* Poll for DLL end of calibration */
+#if (USE_TIMEOUT == 1)
+  uint32_t Timeout = 10; /* Timeout Initialization */
+#endif  /*USE_TIMEOUT*/
+
+  while(LL_HRTIM_IsActiveFlag_DLLRDY(HRTIM1) == RESET){
+#if (USE_TIMEOUT == 1)
+    if (LL_SYSTICK_IsActiveCounterFlag())  /* Check Systick counter flag to decrement the time-out value */
+    {
+        if(Timeout-- == 0)
+        {
+          Error_Handler();  /* error management */
+        }
+    }
+#endif  /* USE_TIMEOUT */
   }
-  if (HAL_HRTIM_PollForDLLCalibration(&hhrtim1, 10) != HAL_OK)
-  {
-    Error_Handler();
+
+  LL_HRTIM_TIM_SetPrescaler(HRTIM1, LL_HRTIM_TIMER_A, LL_HRTIM_PRESCALERRATIO_MUL32);
+  LL_HRTIM_TIM_SetCounterMode(HRTIM1, LL_HRTIM_TIMER_A, LL_HRTIM_MODE_RETRIGGERABLE);
+  LL_HRTIM_TIM_SetPeriod(HRTIM1, LL_HRTIM_TIMER_A, 32768);
+  LL_HRTIM_TIM_SetRepetition(HRTIM1, LL_HRTIM_TIMER_A, 0x00);
+  LL_HRTIM_TIM_SetUpdateGating(HRTIM1, LL_HRTIM_TIMER_A, LL_HRTIM_UPDATEGATING_INDEPENDENT);
+  LL_HRTIM_TIM_SetCountingMode(HRTIM1, LL_HRTIM_TIMER_A, LL_HRTIM_COUNTING_MODE_UP);
+  LL_HRTIM_TIM_SetComp1Mode(HRTIM1, LL_HRTIM_TIMER_A, LL_HRTIM_GTCMP1_EQUAL);
+  LL_HRTIM_TIM_SetDACTrig(HRTIM1, LL_HRTIM_TIMER_A, LL_HRTIM_DACTRIG_NONE);
+  LL_HRTIM_TIM_DisableHalfMode(HRTIM1, LL_HRTIM_TIMER_A);
+  LL_HRTIM_TIM_SetInterleavedMode(HRTIM1, LL_HRTIM_TIMER_A, LL_HRTIM_INTERLEAVED_MODE_DISABLED);
+  LL_HRTIM_TIM_DisableStartOnSync(HRTIM1, LL_HRTIM_TIMER_A);
+  LL_HRTIM_TIM_DisableResetOnSync(HRTIM1, LL_HRTIM_TIMER_A);
+  LL_HRTIM_TIM_EnablePreload(HRTIM1, LL_HRTIM_TIMER_A);
+  LL_HRTIM_TIM_SetUpdateTrig(HRTIM1, LL_HRTIM_TIMER_A, LL_HRTIM_UPDATETRIG_NONE|LL_HRTIM_UPDATETRIG_REPETITION|LL_HRTIM_UPDATETRIG_RESET);
+  LL_HRTIM_TIM_SetResetTrig(HRTIM1, LL_HRTIM_TIMER_A, LL_HRTIM_RESETTRIG_MASTER_CMP1);
+  LL_HRTIM_TIM_DisablePushPullMode(HRTIM1, LL_HRTIM_TIMER_A);
+  LL_HRTIM_TIM_EnableDeadTime(HRTIM1, LL_HRTIM_TIMER_A);
+  LL_HRTIM_TIM_SetBurstModeOption(HRTIM1, LL_HRTIM_TIMER_A, LL_HRTIM_BURSTMODE_MAINTAINCLOCK);
+  LL_HRTIM_ForceUpdate(HRTIM1, LL_HRTIM_TIMER_A);
+  LL_HRTIM_TIM_DisableResyncUpdate(HRTIM1, LL_HRTIM_TIMER_A);
+  LL_HRTIM_TIM_SetCompare1(HRTIM1, LL_HRTIM_TIMER_A, 5000);
+  LL_HRTIM_DT_SetPrescaler(HRTIM1, LL_HRTIM_TIMER_A, LL_HRTIM_DT_PRESCALER_DIV1);
+  LL_HRTIM_DT_SetRisingValue(HRTIM1, LL_HRTIM_TIMER_A, 8);
+  LL_HRTIM_DT_SetRisingSign(HRTIM1, LL_HRTIM_TIMER_A, LL_HRTIM_DT_RISING_POSITIVE);
+  LL_HRTIM_DT_SetFallingValue(HRTIM1, LL_HRTIM_TIMER_A, 8);
+  LL_HRTIM_DT_SetFallingSign(HRTIM1, LL_HRTIM_TIMER_A, LL_HRTIM_DT_FALLING_POSITIVE);
+  LL_HRTIM_OUT_SetPolarity(HRTIM1, LL_HRTIM_OUTPUT_TA1, LL_HRTIM_OUT_POSITIVE_POLARITY);
+  LL_HRTIM_OUT_SetOutputSetSrc(HRTIM1, LL_HRTIM_OUTPUT_TA1, LL_HRTIM_OUTPUTSET_MASTERCMP1);
+  LL_HRTIM_OUT_SetOutputResetSrc(HRTIM1, LL_HRTIM_OUTPUT_TA1, LL_HRTIM_OUTPUTRESET_TIMCMP1);
+  LL_HRTIM_OUT_SetIdleMode(HRTIM1, LL_HRTIM_OUTPUT_TA1, LL_HRTIM_OUT_NO_IDLE);
+  LL_HRTIM_OUT_SetIdleLevel(HRTIM1, LL_HRTIM_OUTPUT_TA1, LL_HRTIM_OUT_IDLELEVEL_INACTIVE);
+  LL_HRTIM_OUT_SetFaultState(HRTIM1, LL_HRTIM_OUTPUT_TA1, LL_HRTIM_OUT_FAULTSTATE_NO_ACTION);
+  LL_HRTIM_OUT_SetChopperMode(HRTIM1, LL_HRTIM_OUTPUT_TA1, LL_HRTIM_OUT_CHOPPERMODE_DISABLED);
+  LL_HRTIM_OUT_SetPolarity(HRTIM1, LL_HRTIM_OUTPUT_TA2, LL_HRTIM_OUT_POSITIVE_POLARITY);
+  LL_HRTIM_OUT_SetOutputSetSrc(HRTIM1, LL_HRTIM_OUTPUT_TA2, LL_HRTIM_OUTPUTSET_NONE);
+  LL_HRTIM_OUT_SetOutputResetSrc(HRTIM1, LL_HRTIM_OUTPUT_TA2, LL_HRTIM_OUTPUTRESET_NONE);
+  LL_HRTIM_OUT_SetIdleMode(HRTIM1, LL_HRTIM_OUTPUT_TA2, LL_HRTIM_OUT_NO_IDLE);
+  LL_HRTIM_OUT_SetIdleLevel(HRTIM1, LL_HRTIM_OUTPUT_TA2, LL_HRTIM_OUT_IDLELEVEL_INACTIVE);
+  LL_HRTIM_OUT_SetFaultState(HRTIM1, LL_HRTIM_OUTPUT_TA2, LL_HRTIM_OUT_FAULTSTATE_NO_ACTION);
+  LL_HRTIM_OUT_SetChopperMode(HRTIM1, LL_HRTIM_OUTPUT_TA2, LL_HRTIM_OUT_CHOPPERMODE_DISABLED);
+
+  /* Poll for DLL end of calibration */
+#if (USE_TIMEOUT == 1)
+  uint32_t Timeout = 10; /* Timeout Initialization */
+#endif  /*USE_TIMEOUT*/
+
+  while(LL_HRTIM_IsActiveFlag_DLLRDY(HRTIM1) == RESET){
+#if (USE_TIMEOUT == 1)
+    if (LL_SYSTICK_IsActiveCounterFlag())  /* Check Systick counter flag to decrement the time-out value */
+    {
+        if(Timeout-- == 0)
+        {
+          Error_Handler();  /* error management */
+        }
+    }
+#endif  /* USE_TIMEOUT */
   }
-  pTimeBaseCfg.Period = 15542;
-  pTimeBaseCfg.RepetitionCounter = 0x00;
-  pTimeBaseCfg.PrescalerRatio = HRTIM_PRESCALERRATIO_MUL32;
-  pTimeBaseCfg.Mode = HRTIM_MODE_CONTINUOUS;
-  if (HAL_HRTIM_TimeBaseConfig(&hhrtim1, HRTIM_TIMERINDEX_MASTER, &pTimeBaseCfg) != HAL_OK)
-  {
-    Error_Handler();
+
+  LL_HRTIM_TIM_SetPrescaler(HRTIM1, LL_HRTIM_TIMER_B, LL_HRTIM_PRESCALERRATIO_MUL32);
+  LL_HRTIM_TIM_SetCounterMode(HRTIM1, LL_HRTIM_TIMER_B, LL_HRTIM_MODE_RETRIGGERABLE);
+  LL_HRTIM_TIM_SetPeriod(HRTIM1, LL_HRTIM_TIMER_B, 32768);
+  LL_HRTIM_TIM_SetRepetition(HRTIM1, LL_HRTIM_TIMER_B, 0x00);
+  LL_HRTIM_TIM_SetUpdateGating(HRTIM1, LL_HRTIM_TIMER_B, LL_HRTIM_UPDATEGATING_INDEPENDENT);
+  LL_HRTIM_TIM_SetCountingMode(HRTIM1, LL_HRTIM_TIMER_B, LL_HRTIM_COUNTING_MODE_UP);
+  LL_HRTIM_TIM_SetComp1Mode(HRTIM1, LL_HRTIM_TIMER_B, LL_HRTIM_GTCMP1_EQUAL);
+  LL_HRTIM_TIM_SetDACTrig(HRTIM1, LL_HRTIM_TIMER_B, LL_HRTIM_DACTRIG_NONE);
+  LL_HRTIM_TIM_DisableHalfMode(HRTIM1, LL_HRTIM_TIMER_B);
+  LL_HRTIM_TIM_SetInterleavedMode(HRTIM1, LL_HRTIM_TIMER_B, LL_HRTIM_INTERLEAVED_MODE_DISABLED);
+  LL_HRTIM_TIM_DisableStartOnSync(HRTIM1, LL_HRTIM_TIMER_B);
+  LL_HRTIM_TIM_DisableResetOnSync(HRTIM1, LL_HRTIM_TIMER_B);
+  LL_HRTIM_TIM_EnablePreload(HRTIM1, LL_HRTIM_TIMER_B);
+  LL_HRTIM_TIM_SetUpdateTrig(HRTIM1, LL_HRTIM_TIMER_B, LL_HRTIM_UPDATETRIG_NONE|LL_HRTIM_UPDATETRIG_REPETITION|LL_HRTIM_UPDATETRIG_RESET);
+  LL_HRTIM_TIM_SetResetTrig(HRTIM1, LL_HRTIM_TIMER_B, LL_HRTIM_RESETTRIG_MASTER_CMP2);
+  LL_HRTIM_TIM_DisablePushPullMode(HRTIM1, LL_HRTIM_TIMER_B);
+  LL_HRTIM_TIM_EnableDeadTime(HRTIM1, LL_HRTIM_TIMER_B);
+  LL_HRTIM_TIM_SetBurstModeOption(HRTIM1, LL_HRTIM_TIMER_B, LL_HRTIM_BURSTMODE_MAINTAINCLOCK);
+  LL_HRTIM_ForceUpdate(HRTIM1, LL_HRTIM_TIMER_B);
+  LL_HRTIM_TIM_DisableResyncUpdate(HRTIM1, LL_HRTIM_TIMER_B);
+  LL_HRTIM_TIM_SetCompare1(HRTIM1, LL_HRTIM_TIMER_B, 3000);
+  LL_HRTIM_DT_SetPrescaler(HRTIM1, LL_HRTIM_TIMER_B, LL_HRTIM_DT_PRESCALER_DIV1);
+  LL_HRTIM_DT_SetRisingValue(HRTIM1, LL_HRTIM_TIMER_B, 8);
+  LL_HRTIM_DT_SetRisingSign(HRTIM1, LL_HRTIM_TIMER_B, LL_HRTIM_DT_RISING_POSITIVE);
+  LL_HRTIM_DT_SetFallingValue(HRTIM1, LL_HRTIM_TIMER_B, 8);
+  LL_HRTIM_DT_SetFallingSign(HRTIM1, LL_HRTIM_TIMER_B, LL_HRTIM_DT_FALLING_POSITIVE);
+  LL_HRTIM_OUT_SetPolarity(HRTIM1, LL_HRTIM_OUTPUT_TB1, LL_HRTIM_OUT_POSITIVE_POLARITY);
+  LL_HRTIM_OUT_SetOutputSetSrc(HRTIM1, LL_HRTIM_OUTPUT_TB1, LL_HRTIM_OUTPUTSET_MASTERCMP2);
+  LL_HRTIM_OUT_SetOutputResetSrc(HRTIM1, LL_HRTIM_OUTPUT_TB1, LL_HRTIM_OUTPUTRESET_TIMCMP1);
+  LL_HRTIM_OUT_SetIdleMode(HRTIM1, LL_HRTIM_OUTPUT_TB1, LL_HRTIM_OUT_NO_IDLE);
+  LL_HRTIM_OUT_SetIdleLevel(HRTIM1, LL_HRTIM_OUTPUT_TB1, LL_HRTIM_OUT_IDLELEVEL_INACTIVE);
+  LL_HRTIM_OUT_SetFaultState(HRTIM1, LL_HRTIM_OUTPUT_TB1, LL_HRTIM_OUT_FAULTSTATE_NO_ACTION);
+  LL_HRTIM_OUT_SetChopperMode(HRTIM1, LL_HRTIM_OUTPUT_TB1, LL_HRTIM_OUT_CHOPPERMODE_DISABLED);
+  LL_HRTIM_OUT_SetPolarity(HRTIM1, LL_HRTIM_OUTPUT_TB2, LL_HRTIM_OUT_POSITIVE_POLARITY);
+  LL_HRTIM_OUT_SetOutputSetSrc(HRTIM1, LL_HRTIM_OUTPUT_TB2, LL_HRTIM_OUTPUTSET_NONE);
+  LL_HRTIM_OUT_SetOutputResetSrc(HRTIM1, LL_HRTIM_OUTPUT_TB2, LL_HRTIM_OUTPUTRESET_NONE);
+  LL_HRTIM_OUT_SetIdleMode(HRTIM1, LL_HRTIM_OUTPUT_TB2, LL_HRTIM_OUT_NO_IDLE);
+  LL_HRTIM_OUT_SetIdleLevel(HRTIM1, LL_HRTIM_OUTPUT_TB2, LL_HRTIM_OUT_IDLELEVEL_INACTIVE);
+  LL_HRTIM_OUT_SetFaultState(HRTIM1, LL_HRTIM_OUTPUT_TB2, LL_HRTIM_OUT_FAULTSTATE_NO_ACTION);
+  LL_HRTIM_OUT_SetChopperMode(HRTIM1, LL_HRTIM_OUTPUT_TB2, LL_HRTIM_OUT_CHOPPERMODE_DISABLED);
+
+  /* Poll for DLL end of calibration */
+#if (USE_TIMEOUT == 1)
+  uint32_t Timeout = 10; /* Timeout Initialization */
+#endif  /*USE_TIMEOUT*/
+
+  while(LL_HRTIM_IsActiveFlag_DLLRDY(HRTIM1) == RESET){
+#if (USE_TIMEOUT == 1)
+    if (LL_SYSTICK_IsActiveCounterFlag())  /* Check Systick counter flag to decrement the time-out value */
+    {
+        if(Timeout-- == 0)
+        {
+          Error_Handler();  /* error management */
+        }
+    }
+#endif  /* USE_TIMEOUT */
   }
-  pTimerCfg.InterruptRequests = HRTIM_MASTER_IT_NONE;
-  pTimerCfg.DMARequests = HRTIM_MASTER_DMA_NONE;
-  pTimerCfg.DMASrcAddress = 0x0000;
-  pTimerCfg.DMADstAddress = 0x0000;
-  pTimerCfg.DMASize = 0x1;
-  pTimerCfg.HalfModeEnable = HRTIM_HALFMODE_DISABLED;
-  pTimerCfg.InterleavedMode = HRTIM_INTERLEAVED_MODE_DISABLED;
-  pTimerCfg.StartOnSync = HRTIM_SYNCSTART_DISABLED;
-  pTimerCfg.ResetOnSync = HRTIM_SYNCRESET_DISABLED;
-  pTimerCfg.DACSynchro = HRTIM_DACSYNC_NONE;
-  pTimerCfg.PreloadEnable = HRTIM_PRELOAD_ENABLED;
-  pTimerCfg.UpdateGating = HRTIM_UPDATEGATING_INDEPENDENT;
-  pTimerCfg.BurstMode = HRTIM_TIMERBURSTMODE_MAINTAINCLOCK;
-  pTimerCfg.RepetitionUpdate = HRTIM_UPDATEONREPETITION_ENABLED;
-  pTimerCfg.ReSyncUpdate = HRTIM_TIMERESYNC_UPDATE_UNCONDITIONAL;
-  if (HAL_HRTIM_WaveformTimerConfig(&hhrtim1, HRTIM_TIMERINDEX_MASTER, &pTimerCfg) != HAL_OK)
-  {
-    Error_Handler();
+
+  LL_HRTIM_TIM_SetPrescaler(HRTIM1, LL_HRTIM_TIMER_E, LL_HRTIM_PRESCALERRATIO_MUL32);
+  LL_HRTIM_TIM_SetCounterMode(HRTIM1, LL_HRTIM_TIMER_E, LL_HRTIM_MODE_RETRIGGERABLE);
+  LL_HRTIM_TIM_SetPeriod(HRTIM1, LL_HRTIM_TIMER_E, 32768);
+  LL_HRTIM_TIM_SetRepetition(HRTIM1, LL_HRTIM_TIMER_E, 0x00);
+  LL_HRTIM_TIM_SetUpdateGating(HRTIM1, LL_HRTIM_TIMER_E, LL_HRTIM_UPDATEGATING_INDEPENDENT);
+  LL_HRTIM_TIM_SetCountingMode(HRTIM1, LL_HRTIM_TIMER_E, LL_HRTIM_COUNTING_MODE_UP);
+  LL_HRTIM_TIM_SetComp1Mode(HRTIM1, LL_HRTIM_TIMER_E, LL_HRTIM_GTCMP1_EQUAL);
+  LL_HRTIM_TIM_SetDACTrig(HRTIM1, LL_HRTIM_TIMER_E, LL_HRTIM_DACTRIG_NONE);
+  LL_HRTIM_TIM_DisableHalfMode(HRTIM1, LL_HRTIM_TIMER_E);
+  LL_HRTIM_TIM_SetInterleavedMode(HRTIM1, LL_HRTIM_TIMER_E, LL_HRTIM_INTERLEAVED_MODE_DISABLED);
+  LL_HRTIM_TIM_DisableStartOnSync(HRTIM1, LL_HRTIM_TIMER_E);
+  LL_HRTIM_TIM_DisableResetOnSync(HRTIM1, LL_HRTIM_TIMER_E);
+  LL_HRTIM_TIM_EnablePreload(HRTIM1, LL_HRTIM_TIMER_E);
+  LL_HRTIM_TIM_SetUpdateTrig(HRTIM1, LL_HRTIM_TIMER_E, LL_HRTIM_UPDATETRIG_NONE|LL_HRTIM_UPDATETRIG_REPETITION|LL_HRTIM_UPDATETRIG_RESET);
+  LL_HRTIM_TIM_SetResetTrig(HRTIM1, LL_HRTIM_TIMER_E, LL_HRTIM_RESETTRIG_MASTER_CMP3);
+  LL_HRTIM_TIM_DisablePushPullMode(HRTIM1, LL_HRTIM_TIMER_E);
+  LL_HRTIM_TIM_EnableDeadTime(HRTIM1, LL_HRTIM_TIMER_E);
+  LL_HRTIM_TIM_SetBurstModeOption(HRTIM1, LL_HRTIM_TIMER_E, LL_HRTIM_BURSTMODE_MAINTAINCLOCK);
+  LL_HRTIM_ForceUpdate(HRTIM1, LL_HRTIM_TIMER_E);
+  LL_HRTIM_TIM_DisableResyncUpdate(HRTIM1, LL_HRTIM_TIMER_E);
+  LL_HRTIM_TIM_SetCompare1(HRTIM1, LL_HRTIM_TIMER_E, 2000);
+  LL_HRTIM_DT_SetPrescaler(HRTIM1, LL_HRTIM_TIMER_E, LL_HRTIM_DT_PRESCALER_DIV1);
+  LL_HRTIM_DT_SetRisingValue(HRTIM1, LL_HRTIM_TIMER_E, 8);
+  LL_HRTIM_DT_SetRisingSign(HRTIM1, LL_HRTIM_TIMER_E, LL_HRTIM_DT_RISING_POSITIVE);
+  LL_HRTIM_DT_SetFallingValue(HRTIM1, LL_HRTIM_TIMER_E, 8);
+  LL_HRTIM_DT_SetFallingSign(HRTIM1, LL_HRTIM_TIMER_E, LL_HRTIM_DT_FALLING_POSITIVE);
+  LL_HRTIM_OUT_SetPolarity(HRTIM1, LL_HRTIM_OUTPUT_TE1, LL_HRTIM_OUT_POSITIVE_POLARITY);
+  LL_HRTIM_OUT_SetOutputSetSrc(HRTIM1, LL_HRTIM_OUTPUT_TE1, LL_HRTIM_OUTPUTSET_MASTERCMP3);
+  LL_HRTIM_OUT_SetOutputResetSrc(HRTIM1, LL_HRTIM_OUTPUT_TE1, LL_HRTIM_OUTPUTRESET_TIMCMP1);
+  LL_HRTIM_OUT_SetIdleMode(HRTIM1, LL_HRTIM_OUTPUT_TE1, LL_HRTIM_OUT_NO_IDLE);
+  LL_HRTIM_OUT_SetIdleLevel(HRTIM1, LL_HRTIM_OUTPUT_TE1, LL_HRTIM_OUT_IDLELEVEL_INACTIVE);
+  LL_HRTIM_OUT_SetFaultState(HRTIM1, LL_HRTIM_OUTPUT_TE1, LL_HRTIM_OUT_FAULTSTATE_NO_ACTION);
+  LL_HRTIM_OUT_SetChopperMode(HRTIM1, LL_HRTIM_OUTPUT_TE1, LL_HRTIM_OUT_CHOPPERMODE_DISABLED);
+  LL_HRTIM_OUT_SetPolarity(HRTIM1, LL_HRTIM_OUTPUT_TE2, LL_HRTIM_OUT_POSITIVE_POLARITY);
+  LL_HRTIM_OUT_SetOutputSetSrc(HRTIM1, LL_HRTIM_OUTPUT_TE2, LL_HRTIM_OUTPUTSET_NONE);
+  LL_HRTIM_OUT_SetOutputResetSrc(HRTIM1, LL_HRTIM_OUTPUT_TE2, LL_HRTIM_OUTPUTRESET_NONE);
+  LL_HRTIM_OUT_SetIdleMode(HRTIM1, LL_HRTIM_OUTPUT_TE2, LL_HRTIM_OUT_NO_IDLE);
+  LL_HRTIM_OUT_SetIdleLevel(HRTIM1, LL_HRTIM_OUTPUT_TE2, LL_HRTIM_OUT_IDLELEVEL_INACTIVE);
+  LL_HRTIM_OUT_SetFaultState(HRTIM1, LL_HRTIM_OUTPUT_TE2, LL_HRTIM_OUT_FAULTSTATE_NO_ACTION);
+  LL_HRTIM_OUT_SetChopperMode(HRTIM1, LL_HRTIM_OUTPUT_TE2, LL_HRTIM_OUT_CHOPPERMODE_DISABLED);
+
+  /* Poll for DLL end of calibration */
+#if (USE_TIMEOUT == 1)
+  uint32_t Timeout = 10; /* Timeout Initialization */
+#endif  /*USE_TIMEOUT*/
+
+  while(LL_HRTIM_IsActiveFlag_DLLRDY(HRTIM1) == RESET){
+#if (USE_TIMEOUT == 1)
+    if (LL_SYSTICK_IsActiveCounterFlag())  /* Check Systick counter flag to decrement the time-out value */
+    {
+        if(Timeout-- == 0)
+        {
+          Error_Handler();  /* error management */
+        }
+    }
+#endif  /* USE_TIMEOUT */
   }
-  pCompareCfg.CompareValue = 1000;
-  if (HAL_HRTIM_WaveformCompareConfig(&hhrtim1, HRTIM_TIMERINDEX_MASTER, HRTIM_COMPAREUNIT_1, &pCompareCfg) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  pCompareCfg.CompareValue = 3000;
-  if (HAL_HRTIM_WaveformCompareConfig(&hhrtim1, HRTIM_TIMERINDEX_MASTER, HRTIM_COMPAREUNIT_2, &pCompareCfg) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  pCompareCfg.CompareValue = 5000;
-  if (HAL_HRTIM_WaveformCompareConfig(&hhrtim1, HRTIM_TIMERINDEX_MASTER, HRTIM_COMPAREUNIT_3, &pCompareCfg) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  pCompareCfg.CompareValue = 7000;
-  if (HAL_HRTIM_WaveformCompareConfig(&hhrtim1, HRTIM_TIMERINDEX_MASTER, HRTIM_COMPAREUNIT_4, &pCompareCfg) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  pTimeBaseCfg.Period = 32768;
-  pTimeBaseCfg.Mode = HRTIM_MODE_SINGLESHOT_RETRIGGERABLE;
-  if (HAL_HRTIM_TimeBaseConfig(&hhrtim1, HRTIM_TIMERINDEX_TIMER_A, &pTimeBaseCfg) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  pTimerCtl.UpDownMode = HRTIM_TIMERUPDOWNMODE_UP;
-  pTimerCtl.GreaterCMP1 = HRTIM_TIMERGTCMP1_EQUAL;
-  pTimerCtl.DualChannelDacEnable = HRTIM_TIMER_DCDE_DISABLED;
-  if (HAL_HRTIM_WaveformTimerControl(&hhrtim1, HRTIM_TIMERINDEX_TIMER_A, &pTimerCtl) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  pTimerCfg.InterruptRequests = HRTIM_TIM_IT_NONE;
-  pTimerCfg.DMARequests = HRTIM_TIM_DMA_NONE;
-  pTimerCfg.PushPull = HRTIM_TIMPUSHPULLMODE_DISABLED;
-  pTimerCfg.FaultEnable = HRTIM_TIMFAULTENABLE_NONE;
-  pTimerCfg.FaultLock = HRTIM_TIMFAULTLOCK_READWRITE;
-  pTimerCfg.DeadTimeInsertion = HRTIM_TIMDEADTIMEINSERTION_ENABLED;
-  pTimerCfg.DelayedProtectionMode = HRTIM_TIMER_A_B_C_DELAYEDPROTECTION_DISABLED;
-  pTimerCfg.UpdateTrigger = HRTIM_TIMUPDATETRIGGER_NONE;
-  pTimerCfg.ResetTrigger = HRTIM_TIMRESETTRIGGER_MASTER_CMP1;
-  pTimerCfg.ResetUpdate = HRTIM_TIMUPDATEONRESET_ENABLED;
-  if (HAL_HRTIM_WaveformTimerConfig(&hhrtim1, HRTIM_TIMERINDEX_TIMER_A, &pTimerCfg) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  pTimerCfg.ResetTrigger = HRTIM_TIMRESETTRIGGER_MASTER_CMP2;
-  if (HAL_HRTIM_WaveformTimerConfig(&hhrtim1, HRTIM_TIMERINDEX_TIMER_B, &pTimerCfg) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  pTimerCfg.DelayedProtectionMode = HRTIM_TIMER_D_E_DELAYEDPROTECTION_DISABLED;
-  pTimerCfg.ResetTrigger = HRTIM_TIMRESETTRIGGER_MASTER_CMP3;
-  if (HAL_HRTIM_WaveformTimerConfig(&hhrtim1, HRTIM_TIMERINDEX_TIMER_E, &pTimerCfg) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  pTimerCfg.DelayedProtectionMode = HRTIM_TIMER_F_DELAYEDPROTECTION_DISABLED;
-  pTimerCfg.ResetTrigger = HRTIM_TIMRESETTRIGGER_MASTER_CMP4;
-  if (HAL_HRTIM_WaveformTimerConfig(&hhrtim1, HRTIM_TIMERINDEX_TIMER_F, &pTimerCfg) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  pCompareCfg.CompareValue = 5000;
-  if (HAL_HRTIM_WaveformCompareConfig(&hhrtim1, HRTIM_TIMERINDEX_TIMER_A, HRTIM_COMPAREUNIT_1, &pCompareCfg) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  pDeadTimeCfg.Prescaler = HRTIM_TIMDEADTIME_PRESCALERRATIO_DIV1;
-  pDeadTimeCfg.RisingValue = 8;
-  pDeadTimeCfg.RisingSign = HRTIM_TIMDEADTIME_RISINGSIGN_POSITIVE;
-  pDeadTimeCfg.RisingLock = HRTIM_TIMDEADTIME_RISINGLOCK_WRITE;
-  pDeadTimeCfg.RisingSignLock = HRTIM_TIMDEADTIME_RISINGSIGNLOCK_WRITE;
-  pDeadTimeCfg.FallingValue = 8;
-  pDeadTimeCfg.FallingSign = HRTIM_TIMDEADTIME_FALLINGSIGN_POSITIVE;
-  pDeadTimeCfg.FallingLock = HRTIM_TIMDEADTIME_FALLINGLOCK_WRITE;
-  pDeadTimeCfg.FallingSignLock = HRTIM_TIMDEADTIME_FALLINGSIGNLOCK_WRITE;
-  if (HAL_HRTIM_DeadTimeConfig(&hhrtim1, HRTIM_TIMERINDEX_TIMER_A, &pDeadTimeCfg) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  if (HAL_HRTIM_DeadTimeConfig(&hhrtim1, HRTIM_TIMERINDEX_TIMER_B, &pDeadTimeCfg) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  if (HAL_HRTIM_DeadTimeConfig(&hhrtim1, HRTIM_TIMERINDEX_TIMER_E, &pDeadTimeCfg) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  if (HAL_HRTIM_DeadTimeConfig(&hhrtim1, HRTIM_TIMERINDEX_TIMER_F, &pDeadTimeCfg) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  pOutputCfg.Polarity = HRTIM_OUTPUTPOLARITY_HIGH;
-  pOutputCfg.SetSource = HRTIM_OUTPUTSET_MASTERCMP1;
-  pOutputCfg.ResetSource = HRTIM_OUTPUTRESET_TIMCMP1;
-  pOutputCfg.IdleMode = HRTIM_OUTPUTIDLEMODE_NONE;
-  pOutputCfg.IdleLevel = HRTIM_OUTPUTIDLELEVEL_INACTIVE;
-  pOutputCfg.FaultLevel = HRTIM_OUTPUTFAULTLEVEL_NONE;
-  pOutputCfg.ChopperModeEnable = HRTIM_OUTPUTCHOPPERMODE_DISABLED;
-  pOutputCfg.BurstModeEntryDelayed = HRTIM_OUTPUTBURSTMODEENTRY_REGULAR;
-  if (HAL_HRTIM_WaveformOutputConfig(&hhrtim1, HRTIM_TIMERINDEX_TIMER_A, HRTIM_OUTPUT_TA1, &pOutputCfg) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  pOutputCfg.SetSource = HRTIM_OUTPUTSET_MASTERCMP2;
-  if (HAL_HRTIM_WaveformOutputConfig(&hhrtim1, HRTIM_TIMERINDEX_TIMER_B, HRTIM_OUTPUT_TB1, &pOutputCfg) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  pOutputCfg.SetSource = HRTIM_OUTPUTSET_MASTERCMP3;
-  if (HAL_HRTIM_WaveformOutputConfig(&hhrtim1, HRTIM_TIMERINDEX_TIMER_E, HRTIM_OUTPUT_TE1, &pOutputCfg) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  pOutputCfg.SetSource = HRTIM_OUTPUTSET_MASTERCMP4;
-  if (HAL_HRTIM_WaveformOutputConfig(&hhrtim1, HRTIM_TIMERINDEX_TIMER_F, HRTIM_OUTPUT_TF1, &pOutputCfg) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  pOutputCfg.SetSource = HRTIM_OUTPUTSET_NONE;
-  pOutputCfg.ResetSource = HRTIM_OUTPUTRESET_NONE;
-  if (HAL_HRTIM_WaveformOutputConfig(&hhrtim1, HRTIM_TIMERINDEX_TIMER_A, HRTIM_OUTPUT_TA2, &pOutputCfg) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  if (HAL_HRTIM_WaveformOutputConfig(&hhrtim1, HRTIM_TIMERINDEX_TIMER_B, HRTIM_OUTPUT_TB2, &pOutputCfg) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  if (HAL_HRTIM_WaveformOutputConfig(&hhrtim1, HRTIM_TIMERINDEX_TIMER_E, HRTIM_OUTPUT_TE2, &pOutputCfg) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  if (HAL_HRTIM_WaveformOutputConfig(&hhrtim1, HRTIM_TIMERINDEX_TIMER_F, HRTIM_OUTPUT_TF2, &pOutputCfg) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  if (HAL_HRTIM_TimeBaseConfig(&hhrtim1, HRTIM_TIMERINDEX_TIMER_B, &pTimeBaseCfg) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  if (HAL_HRTIM_WaveformTimerControl(&hhrtim1, HRTIM_TIMERINDEX_TIMER_B, &pTimerCtl) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  pCompareCfg.CompareValue = 3000;
-  if (HAL_HRTIM_WaveformCompareConfig(&hhrtim1, HRTIM_TIMERINDEX_TIMER_B, HRTIM_COMPAREUNIT_1, &pCompareCfg) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  if (HAL_HRTIM_TimeBaseConfig(&hhrtim1, HRTIM_TIMERINDEX_TIMER_E, &pTimeBaseCfg) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  if (HAL_HRTIM_WaveformTimerControl(&hhrtim1, HRTIM_TIMERINDEX_TIMER_E, &pTimerCtl) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  pCompareCfg.CompareValue = 2000;
-  if (HAL_HRTIM_WaveformCompareConfig(&hhrtim1, HRTIM_TIMERINDEX_TIMER_E, HRTIM_COMPAREUNIT_1, &pCompareCfg) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  if (HAL_HRTIM_TimeBaseConfig(&hhrtim1, HRTIM_TIMERINDEX_TIMER_F, &pTimeBaseCfg) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  if (HAL_HRTIM_WaveformTimerControl(&hhrtim1, HRTIM_TIMERINDEX_TIMER_F, &pTimerCtl) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  pCompareCfg.CompareValue = 700;
-  if (HAL_HRTIM_WaveformCompareConfig(&hhrtim1, HRTIM_TIMERINDEX_TIMER_F, HRTIM_COMPAREUNIT_1, &pCompareCfg) != HAL_OK)
-  {
-    Error_Handler();
-  }
+
+  LL_HRTIM_TIM_SetPrescaler(HRTIM1, LL_HRTIM_TIMER_F, LL_HRTIM_PRESCALERRATIO_MUL32);
+  LL_HRTIM_TIM_SetCounterMode(HRTIM1, LL_HRTIM_TIMER_F, LL_HRTIM_MODE_RETRIGGERABLE);
+  LL_HRTIM_TIM_SetPeriod(HRTIM1, LL_HRTIM_TIMER_F, 32768);
+  LL_HRTIM_TIM_SetRepetition(HRTIM1, LL_HRTIM_TIMER_F, 0x00);
+  LL_HRTIM_TIM_SetUpdateGating(HRTIM1, LL_HRTIM_TIMER_F, LL_HRTIM_UPDATEGATING_INDEPENDENT);
+  LL_HRTIM_TIM_SetCountingMode(HRTIM1, LL_HRTIM_TIMER_F, LL_HRTIM_COUNTING_MODE_UP);
+  LL_HRTIM_TIM_SetComp1Mode(HRTIM1, LL_HRTIM_TIMER_F, LL_HRTIM_GTCMP1_EQUAL);
+  LL_HRTIM_TIM_SetDACTrig(HRTIM1, LL_HRTIM_TIMER_F, LL_HRTIM_DACTRIG_NONE);
+  LL_HRTIM_TIM_DisableHalfMode(HRTIM1, LL_HRTIM_TIMER_F);
+  LL_HRTIM_TIM_SetInterleavedMode(HRTIM1, LL_HRTIM_TIMER_F, LL_HRTIM_INTERLEAVED_MODE_DISABLED);
+  LL_HRTIM_TIM_DisableStartOnSync(HRTIM1, LL_HRTIM_TIMER_F);
+  LL_HRTIM_TIM_DisableResetOnSync(HRTIM1, LL_HRTIM_TIMER_F);
+  LL_HRTIM_TIM_EnablePreload(HRTIM1, LL_HRTIM_TIMER_F);
+  LL_HRTIM_TIM_SetUpdateTrig(HRTIM1, LL_HRTIM_TIMER_F, LL_HRTIM_UPDATETRIG_NONE|LL_HRTIM_UPDATETRIG_REPETITION|LL_HRTIM_UPDATETRIG_RESET);
+  LL_HRTIM_TIM_SetResetTrig(HRTIM1, LL_HRTIM_TIMER_F, LL_HRTIM_RESETTRIG_MASTER_CMP4);
+  LL_HRTIM_TIM_DisablePushPullMode(HRTIM1, LL_HRTIM_TIMER_F);
+  LL_HRTIM_TIM_EnableDeadTime(HRTIM1, LL_HRTIM_TIMER_F);
+  LL_HRTIM_TIM_EnableDLYPRT(HRTIM1, LL_HRTIM_TIMER_F);
+  LL_HRTIM_TIM_SetBurstModeOption(HRTIM1, LL_HRTIM_TIMER_F, LL_HRTIM_BURSTMODE_MAINTAINCLOCK);
+  LL_HRTIM_ForceUpdate(HRTIM1, LL_HRTIM_TIMER_F);
+  LL_HRTIM_TIM_DisableResyncUpdate(HRTIM1, LL_HRTIM_TIMER_F);
+  LL_HRTIM_TIM_SetCompare1(HRTIM1, LL_HRTIM_TIMER_F, 700);
+  LL_HRTIM_DT_SetPrescaler(HRTIM1, LL_HRTIM_TIMER_F, LL_HRTIM_DT_PRESCALER_DIV1);
+  LL_HRTIM_DT_SetRisingValue(HRTIM1, LL_HRTIM_TIMER_F, 8);
+  LL_HRTIM_DT_SetRisingSign(HRTIM1, LL_HRTIM_TIMER_F, LL_HRTIM_DT_RISING_POSITIVE);
+  LL_HRTIM_DT_SetFallingValue(HRTIM1, LL_HRTIM_TIMER_F, 8);
+  LL_HRTIM_DT_SetFallingSign(HRTIM1, LL_HRTIM_TIMER_F, LL_HRTIM_DT_FALLING_POSITIVE);
+  LL_HRTIM_OUT_SetPolarity(HRTIM1, LL_HRTIM_OUTPUT_TF1, LL_HRTIM_OUT_POSITIVE_POLARITY);
+  LL_HRTIM_OUT_SetOutputSetSrc(HRTIM1, LL_HRTIM_OUTPUT_TF1, LL_HRTIM_OUTPUTSET_MASTERCMP4);
+  LL_HRTIM_OUT_SetOutputResetSrc(HRTIM1, LL_HRTIM_OUTPUT_TF1, LL_HRTIM_OUTPUTRESET_TIMCMP1);
+  LL_HRTIM_OUT_SetIdleMode(HRTIM1, LL_HRTIM_OUTPUT_TF1, LL_HRTIM_OUT_NO_IDLE);
+  LL_HRTIM_OUT_SetIdleLevel(HRTIM1, LL_HRTIM_OUTPUT_TF1, LL_HRTIM_OUT_IDLELEVEL_INACTIVE);
+  LL_HRTIM_OUT_SetFaultState(HRTIM1, LL_HRTIM_OUTPUT_TF1, LL_HRTIM_OUT_FAULTSTATE_NO_ACTION);
+  LL_HRTIM_OUT_SetChopperMode(HRTIM1, LL_HRTIM_OUTPUT_TF1, LL_HRTIM_OUT_CHOPPERMODE_DISABLED);
+  LL_HRTIM_OUT_SetPolarity(HRTIM1, LL_HRTIM_OUTPUT_TF2, LL_HRTIM_OUT_POSITIVE_POLARITY);
+  LL_HRTIM_OUT_SetOutputSetSrc(HRTIM1, LL_HRTIM_OUTPUT_TF2, LL_HRTIM_OUTPUTSET_NONE);
+  LL_HRTIM_OUT_SetOutputResetSrc(HRTIM1, LL_HRTIM_OUTPUT_TF2, LL_HRTIM_OUTPUTRESET_NONE);
+  LL_HRTIM_OUT_SetIdleMode(HRTIM1, LL_HRTIM_OUTPUT_TF2, LL_HRTIM_OUT_NO_IDLE);
+  LL_HRTIM_OUT_SetIdleLevel(HRTIM1, LL_HRTIM_OUTPUT_TF2, LL_HRTIM_OUT_IDLELEVEL_INACTIVE);
+  LL_HRTIM_OUT_SetFaultState(HRTIM1, LL_HRTIM_OUTPUT_TF2, LL_HRTIM_OUT_FAULTSTATE_NO_ACTION);
+  LL_HRTIM_OUT_SetChopperMode(HRTIM1, LL_HRTIM_OUTPUT_TF2, LL_HRTIM_OUT_CHOPPERMODE_DISABLED);
   /* USER CODE BEGIN HRTIM1_Init 2 */
 
   /* USER CODE END HRTIM1_Init 2 */
-  HAL_HRTIM_MspPostInit(&hhrtim1);
-
-}
-
-void HAL_HRTIM_MspInit(HRTIM_HandleTypeDef* hrtimHandle)
-{
-
-  if(hrtimHandle->Instance==HRTIM1)
-  {
-  /* USER CODE BEGIN HRTIM1_MspInit 0 */
-
-  /* USER CODE END HRTIM1_MspInit 0 */
-    /* HRTIM1 clock enable */
-    __HAL_RCC_HRTIM1_CLK_ENABLE();
-  /* USER CODE BEGIN HRTIM1_MspInit 1 */
-
-  /* USER CODE END HRTIM1_MspInit 1 */
-  }
-}
-
-void HAL_HRTIM_MspPostInit(HRTIM_HandleTypeDef* hrtimHandle)
-{
-
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
-  if(hrtimHandle->Instance==HRTIM1)
-  {
-  /* USER CODE BEGIN HRTIM1_MspPostInit 0 */
-
-  /* USER CODE END HRTIM1_MspPostInit 0 */
-
-    __HAL_RCC_GPIOC_CLK_ENABLE();
-    __HAL_RCC_GPIOA_CLK_ENABLE();
+  LL_AHB2_GRP1_EnableClock(LL_AHB2_GRP1_PERIPH_GPIOC);
+  LL_AHB2_GRP1_EnableClock(LL_AHB2_GRP1_PERIPH_GPIOA);
     /**HRTIM1 GPIO Configuration
     PC6     ------> HRTIM1_CHF1
     PC7     ------> HRTIM1_CHF2
@@ -309,48 +326,70 @@ void HAL_HRTIM_MspPostInit(HRTIM_HandleTypeDef* hrtimHandle)
     PA10     ------> HRTIM1_CHB1
     PA11     ------> HRTIM1_CHB2
     */
-    GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_7;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF13_HRTIM1;
-    HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+  GPIO_InitStruct.Pin = LL_GPIO_PIN_6;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
+  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  GPIO_InitStruct.Alternate = LL_GPIO_AF_13;
+  LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-    GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_9;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF3_HRTIM1;
-    HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+  GPIO_InitStruct.Pin = LL_GPIO_PIN_7;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
+  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  GPIO_InitStruct.Alternate = LL_GPIO_AF_13;
+  LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-    GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF13_HRTIM1;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  GPIO_InitStruct.Pin = LL_GPIO_PIN_8;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
+  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  GPIO_InitStruct.Alternate = LL_GPIO_AF_3;
+  LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /* USER CODE BEGIN HRTIM1_MspPostInit 1 */
+  GPIO_InitStruct.Pin = LL_GPIO_PIN_9;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
+  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  GPIO_InitStruct.Alternate = LL_GPIO_AF_3;
+  LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /* USER CODE END HRTIM1_MspPostInit 1 */
-  }
+  GPIO_InitStruct.Pin = LL_GPIO_PIN_8;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
+  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  GPIO_InitStruct.Alternate = LL_GPIO_AF_13;
+  LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-}
+  GPIO_InitStruct.Pin = LL_GPIO_PIN_9;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
+  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  GPIO_InitStruct.Alternate = LL_GPIO_AF_13;
+  LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-void HAL_HRTIM_MspDeInit(HRTIM_HandleTypeDef* hrtimHandle)
-{
+  GPIO_InitStruct.Pin = LL_GPIO_PIN_10;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
+  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  GPIO_InitStruct.Alternate = LL_GPIO_AF_13;
+  LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  if(hrtimHandle->Instance==HRTIM1)
-  {
-  /* USER CODE BEGIN HRTIM1_MspDeInit 0 */
+  GPIO_InitStruct.Pin = LL_GPIO_PIN_11;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
+  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  GPIO_InitStruct.Alternate = LL_GPIO_AF_13;
+  LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /* USER CODE END HRTIM1_MspDeInit 0 */
-    /* Peripheral clock disable */
-    __HAL_RCC_HRTIM1_CLK_DISABLE();
-  /* USER CODE BEGIN HRTIM1_MspDeInit 1 */
-
-  /* USER CODE END HRTIM1_MspDeInit 1 */
-  }
 }
 
 /* USER CODE BEGIN 1 */

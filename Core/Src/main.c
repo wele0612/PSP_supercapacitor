@@ -99,15 +99,18 @@ int main(void)
   MX_ADC3_Init();
   /* USER CODE BEGIN 2 */
   dcdc_init();
+  LL_HRTIM_TIM_CounterEnable(HRTIM1, LL_HRTIM_TIMER_ALL);
+  /*
   HAL_HRTIM_WaveformCountStart_IT(&hhrtim1, HRTIM_TIMERID_MASTER | HRTIM_TIMERID_TIMER_A | HRTIM_TIMERID_TIMER_B |
                                             HRTIM_TIMERID_TIMER_E | HRTIM_TIMERID_TIMER_F);
+                                            */
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   { 
-    for(float i=0.f;i<100.0f;i+=1.1f){
+    for(float i=0.f;i<100.0f;i+=0.1f){
       dcdc_setduty(i);
       HAL_Delay(1);
     }
