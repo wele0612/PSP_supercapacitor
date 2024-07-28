@@ -1,6 +1,16 @@
 #include "dcdc.h"
 
+pwr_adc_t adc;
+pwr_data_t data={.tail=VOFA_TAIL};
+
 void dcdc_init(){
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_15, SET);
+
+    HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
+    HAL_ADCEx_Calibration_Start(&hadc2, ADC_SINGLE_ENDED);
+    HAL_ADCEx_Calibration_Start(&hadc3, ADC_SINGLE_ENDED);
+    
+
     LL_HRTIM_EnableOutput(HRTIM1, LL_HRTIM_OUTPUT_TA1);
     LL_HRTIM_EnableOutput(HRTIM1, LL_HRTIM_OUTPUT_TA2);
 
@@ -12,20 +22,19 @@ void dcdc_init(){
 
     LL_HRTIM_EnableOutput(HRTIM1, LL_HRTIM_OUTPUT_TF1);
     LL_HRTIM_EnableOutput(HRTIM1, LL_HRTIM_OUTPUT_TF2);
-    // HAL_HRTIM_WaveformOutputStart(&hhrtim1, HRTIM_OUTPUT_TA1);
-    // HAL_HRTIM_WaveformOutputStart(&hhrtim1, HRTIM_OUTPUT_TA2);
 
-    // HAL_HRTIM_WaveformOutputStart(&hhrtim1, HRTIM_OUTPUT_TB1);
-    // HAL_HRTIM_WaveformOutputStart(&hhrtim1, HRTIM_OUTPUT_TB2);
+    HAL_ADC_Start_DMA(&hadc1, (uint32_t *)&(adc.i_motor), 2);
+    HAL_ADC_Start_DMA(&hadc2, (uint32_t *)&(adc.i_dcdc), 3);
+    HAL_ADC_Start_DMA(&hadc3, (uint32_t *)&(adc.i_fw2), 2);
 
-    // HAL_HRTIM_WaveformOutputStart(&hhrtim1, HRTIM_OUTPUT_TE1);
-    // HAL_HRTIM_WaveformOutputStart(&hhrtim1, HRTIM_OUTPUT_TE2);
+    HAL_UART_Transmit_DMA(&huart4, (uint8_t *)&data, sizeof(data));
 
-    // HAL_HRTIM_WaveformOutputStart(&hhrtim1, HRTIM_OUTPUT_TF1);
-    // HAL_HRTIM_WaveformOutputStart(&hhrtim1, HRTIM_OUTPUT_TF2);
+    dcdc_setphase(10.0f);
+    dcdc_setduty(45.0f);
 
-    dcdc_setphase(0.0f);
-    dcdc_setduty(20.0f);
+    HAL_Delay(100);
+
+    
 }
 
 void dcdc_setphase(float percentage){
@@ -47,11 +56,6 @@ void dcdc_setphase(float percentage){
 
    LL_HRTIM_TIM_SetCompare4(HRTIM1, LL_HRTIM_TIMER_MASTER, phaseB);
    LL_HRTIM_TIM_SetCompare1(HRTIM1, LL_HRTIM_TIMER_MASTER, phaseBsh);
-    // __HAL_HRTIM_SetCompare(&hhrtim1, HRTIM_TIMERINDEX_MASTER, HRTIM_COMPAREUNIT_3, phaseA);
-    // __HAL_HRTIM_SetCompare(&hhrtim1, HRTIM_TIMERINDEX_MASTER, HRTIM_COMPAREUNIT_2, phaseAsh);
-
-    // __HAL_HRTIM_SetCompare(&hhrtim1, HRTIM_TIMERINDEX_MASTER, HRTIM_COMPAREUNIT_4, phaseB);
-    // __HAL_HRTIM_SetCompare(&hhrtim1, HRTIM_TIMERINDEX_MASTER, HRTIM_COMPAREUNIT_1, phaseBsh);
     return;
 }
 
@@ -83,11 +87,7 @@ void dcdc_setduty(float duty){
     LL_HRTIM_TIM_SetCompare1(HRTIM1, LL_HRTIM_TIMER_A, comp_right);
     LL_HRTIM_TIM_SetCompare1(HRTIM1, LL_HRTIM_TIMER_B, comp_right);
 
-    // __HAL_HRTIM_SETCOMPARE(&hhrtim1, HRTIM_TIMERINDEX_TIMER_E, HRTIM_COMPAREUNIT_1,comp_left);
-    // __HAL_HRTIM_SETCOMPARE(&hhrtim1, HRTIM_TIMERINDEX_TIMER_F, HRTIM_COMPAREUNIT_1,comp_left);
-
-    // __HAL_HRTIM_SETCOMPARE(&hhrtim1, HRTIM_TIMERINDEX_TIMER_A, HRTIM_COMPAREUNIT_1,comp_right);
-    // __HAL_HRTIM_SETCOMPARE(&hhrtim1, HRTIM_TIMERINDEX_TIMER_B, HRTIM_COMPAREUNIT_1,comp_right);
+    LL_HRTIM_EnableIT_REP(HRTIM1, LL_HRTIM_TIMER_MASTER);
 }
 
 int checkCompVal(int val){
@@ -100,6 +100,27 @@ int checkCompVal(int val){
     }
 }
 
+static void adc_value_conversion(void){
+    float i_motor=(adc.i_motor*(V_REF/4095.f)-INA181_REF)*(IMOTOR_CAL*2000.0f/100.0f);
+    data.i_motor=i_motor*IIR_C+data.i_motor*(1.0f-IIR_C);
+
+    float i_dcdc=(adc.i_dcdc*(V_REF/4095.f)-INA181_REF)*(2000.0f/100.0f);
+    data.i_dcdc=i_dcdc*IIR_C+data.i_dcdc*(1.0f-IIR_C);
+
+    float i_tot=(adc.i_tot*(V_REF/4095.f)-INA181_REF)*(1000.0f/100.0f);
+    data.i_tot=i_tot*IIR_C+data.i_tot*(1.0f-IIR_C);
+
+    float v_bus=adc.v_bus*(11.0f*V_REF/4095.f);
+    data.v_bus=v_bus*IIR_V+data.v_bus*(1.0f-IIR_V);
+
+    float v_cap=adc.v_cap*(11.0f*V_REF/4095.f);
+    data.v_cap=v_cap*IIR_V+data.v_cap*(1.0f-IIR_V);
+    return;
+}
+
 void dcdc_mainISR(void){
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
+    adc_value_conversion();
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
     return;
 }

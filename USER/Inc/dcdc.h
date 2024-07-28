@@ -2,19 +2,28 @@
 #define __DCDC__H
 
 #include "adc.h"
+#include "gpio.h"
 #include "hrtim.h"
+#include "usart.h"
 #include <stdint.h>
 
 #define DCDC_PERIOD 15542
-#define DCDC_COMPARE_MINVAL (3*32+2)
+#define DCDC_COMPARE_MINVAL (700)
 
 #define toCompareVal(p) ((int)((p/100.0f)*(float)DCDC_PERIOD))
+
+#define IIR_V 0.05f
+#define IIR_C 0.2f
+#define INA181_REF 1.25f
+#define IMOTOR_CAL 0.83f
+
+#define V_REF (3.00f)
 
 typedef struct pwr_adc_t{
     uint16_t i_motor;   //ADC1_IN3 (PA2)
     uint16_t v_bus;     //ADC1_IN4 (PA3)
     uint16_t i_dcdc;    //ADC2_IN13(PA5)
-    uint16_t i_bus;     //ADC2_IN5 (PC4)
+    uint16_t i_tot;     //ADC2_IN5 (PC4)
     uint16_t v_cap;     //ADC2_IN12(PB2)
     uint16_t i_fw2;     //ADC3_IN12(PB0)
     uint16_t i_fw1;     //ADC3_IN1 (PB1)

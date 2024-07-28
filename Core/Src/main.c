@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "adc.h"
+#include "dma.h"
 #include "fdcan.h"
 #include "hrtim.h"
 #include "spi.h"
@@ -90,6 +91,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_FDCAN2_Init();
   MX_HRTIM1_Init();
   MX_SPI3_Init();
@@ -100,10 +102,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   dcdc_init();
   LL_HRTIM_TIM_CounterEnable(HRTIM1, LL_HRTIM_TIMER_ALL);
-  /*
-  HAL_HRTIM_WaveformCountStart_IT(&hhrtim1, HRTIM_TIMERID_MASTER | HRTIM_TIMERID_TIMER_A | HRTIM_TIMERID_TIMER_B |
-                                            HRTIM_TIMERID_TIMER_E | HRTIM_TIMERID_TIMER_F);
-                                            */
+  HAL_GPIO_WritePin(DRV_EN_GPIO_Port, DRV_EN_Pin, SET);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -111,7 +110,7 @@ int main(void)
   while (1)
   { 
     for(float i=0.f;i<100.0f;i+=0.1f){
-      dcdc_setduty(i);
+      //dcdc_setduty(i);
       HAL_Delay(1);
     }
     HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
