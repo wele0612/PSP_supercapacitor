@@ -44,16 +44,16 @@ void MX_FDCAN2_Init(void)
   hfdcan2.Init.AutoRetransmission = DISABLE;
   hfdcan2.Init.TransmitPause = DISABLE;
   hfdcan2.Init.ProtocolException = DISABLE;
-  hfdcan2.Init.NominalPrescaler = 16;
+  hfdcan2.Init.NominalPrescaler = 17;
   hfdcan2.Init.NominalSyncJumpWidth = 1;
-  hfdcan2.Init.NominalTimeSeg1 = 2;
-  hfdcan2.Init.NominalTimeSeg2 = 2;
-  hfdcan2.Init.DataPrescaler = 1;
+  hfdcan2.Init.NominalTimeSeg1 = 4;
+  hfdcan2.Init.NominalTimeSeg2 = 5;
+  hfdcan2.Init.DataPrescaler = 10;
   hfdcan2.Init.DataSyncJumpWidth = 1;
-  hfdcan2.Init.DataTimeSeg1 = 1;
-  hfdcan2.Init.DataTimeSeg2 = 1;
-  hfdcan2.Init.StdFiltersNbr = 0;
-  hfdcan2.Init.ExtFiltersNbr = 0;
+  hfdcan2.Init.DataTimeSeg1 = 15;
+  hfdcan2.Init.DataTimeSeg2 = 8;
+  hfdcan2.Init.StdFiltersNbr = 28;
+  hfdcan2.Init.ExtFiltersNbr = 8;
   hfdcan2.Init.TxFifoQueueMode = FDCAN_TX_FIFO_OPERATION;
   if (HAL_FDCAN_Init(&hfdcan2) != HAL_OK)
   {

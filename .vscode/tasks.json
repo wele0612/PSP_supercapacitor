@@ -4,7 +4,7 @@
         {
             "type": "shell",
             "label": "Build STM32 Firmware",
-            "command": "make -j OPT=-Og",
+            "command": "make -j ",
             "args": [],
             "problemMatcher": [
                 "$gcc"

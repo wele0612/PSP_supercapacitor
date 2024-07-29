@@ -3,6 +3,37 @@
 pwr_adc_t adc;
 pwr_data_t data={.tail=VOFA_TAIL};
 
+int state=CAP_OFF;
+uint32_t protection_triggered=0;
+float set_current=2.5f;  //current to be achieved by PID
+float target_current=1.0f; //dcdc-current required due to power limit
+float total_allow_current=3.0f; //total-current required due to power limit
+
+PID_t _i={
+    .p=0.0f,
+    .i=30000.0f,
+    .d=0.0f,
+    .i_max=0.01f,
+    .errm1=0.0f,
+    .err_i=0.0f,
+};
+
+/**
+ * @brief Turn on the MOS driver circuit, enable DCDC. 
+ * 开启DCDC电路。
+ */
+void dcdc_on(){
+    HAL_GPIO_WritePin(DRV_EN_GPIO_Port, DRV_EN_Pin, SET);
+}
+/**
+ * @brief Turn off the MOS driver circuit, disable DCDC. 
+ * 关闭DCDC电路。
+ */
+void dcdc_off(){
+    HAL_GPIO_WritePin(DRV_EN_GPIO_Port, DRV_EN_Pin, RESET);
+}
+
+
 void dcdc_init(){
     HAL_GPIO_WritePin(GPIOA, GPIO_PIN_15, SET);
 
@@ -32,9 +63,21 @@ void dcdc_init(){
     dcdc_setphase(10.0f);
     dcdc_setduty(45.0f);
 
-    HAL_Delay(100);
+    HAL_Delay(200);
 
-    
+    LL_HRTIM_EnableIT_REP(HRTIM1, LL_HRTIM_TIMER_MASTER);
+
+    state=CAP_READY;
+}
+
+__STATIC_INLINE int checkCompVal(int val){
+    if(val<DCDC_COMPARE_MINVAL){
+        return DCDC_COMPARE_MINVAL;
+    }else if(val>DCDC_PERIOD-100){
+        return DCDC_PERIOD-100;
+    }else{
+        return val;
+    }
 }
 
 void dcdc_setphase(float percentage){
@@ -58,6 +101,8 @@ void dcdc_setphase(float percentage){
    LL_HRTIM_TIM_SetCompare1(HRTIM1, LL_HRTIM_TIMER_MASTER, phaseBsh);
     return;
 }
+
+
 
 void dcdc_setduty(float duty){
     float leftduty,rightduty;
@@ -86,29 +131,97 @@ void dcdc_setduty(float duty){
 
     LL_HRTIM_TIM_SetCompare1(HRTIM1, LL_HRTIM_TIMER_A, comp_right);
     LL_HRTIM_TIM_SetCompare1(HRTIM1, LL_HRTIM_TIMER_B, comp_right);
-
-    LL_HRTIM_EnableIT_REP(HRTIM1, LL_HRTIM_TIMER_MASTER);
 }
 
-int checkCompVal(int val){
-    if(val<DCDC_COMPARE_MINVAL){
-        return DCDC_COMPARE_MINVAL;
-    }else if(val>DCDC_PERIOD-100){
-        return DCDC_PERIOD-100;
-    }else{
-        return val;
+/**
+ * @brief Reset integral term of DCDC. 
+ * 重置积分项。
+ */
+__STATIC_INLINE void pid_reset(){
+    _i.err_i= 0;
+}
+
+/**
+ * @brief Calculate PID for next period.
+ * @note This PID controls 
+ */
+__STATIC_INLINE void update_pid(){
+
+    /// P and D disabled for now
+
+    float i_err=set_current-data.i_dcdc;
+    _i.err_i += i_err*DT;
+    // float err_d=(i_err-_i.errm1)*(1.0f/DT);
+    // _i.errm1=i_err;
+
+    if(_i.err_i > _i.i_max) _i.err_i=_i.i_max;
+    if(_i.err_i < -_i.i_max) _i.err_i=-_i.i_max;
+    
+    //dcdc_setduty(i_err*_i.p + _i.err_i*_i.i + err_d*_i.d);
+    dcdc_setduty(_i.err_i*_i.i);
+}
+
+/**
+ * @brief State machine implementation of DCDC module.
+ * 
+ */
+static void cap_state_machine(){
+    //data.state=(float)state*10;
+
+    if(data.v_bus > BUS_OVP_THRE){ //BUS over-voltage protection
+        state=VBUS_OVP;
+        protection_triggered=HAL_GetTick();
+    }else if(data.v_bus < BUS_UVP_THRE){ //BUS under-voltage halt
+        state=VBUS_UVP;
+        protection_triggered=HAL_GetTick();
+    }else if(data.v_cap > BAT_OVP_THRE){ //BAT over-voltage protection
+        state=VBAT_OVP;
+        //data.testval=data.v_cap;// debug display output
+        protection_triggered=HAL_GetTick();
+    }else if(state==VBUS_UVP && data.v_bus > BUS_UVP_THRE \
+        && protection_triggered < HAL_GetTick() - 50){ 
+        //recovery from BUS UVP
+        pid_reset();
+        protection_triggered=HAL_GetTick();
+        state=CAP_READY;
+    }
+
+    //state-transition of DCDC FSM
+    switch (state)
+    {
+    case CAP_ON:
+        update_pid();
+        break;
+    case CAP_READY:
+        dcdc_on();
+        state=CAP_ON;
+        break;
+    case CAP_OFF: //本行疑似bug。暂时似乎没有影响。
+    case VBUS_OVP:
+    case VBAT_OVP:
+    //进入保护后，系统会每隔 PROTECTION_RECOVERY_TIME 毫秒尝试重启。
+        if(HAL_GetTick() > protection_triggered + PROTECTION_RECOVERY_TIME){
+            pid_reset();
+            state=CAP_READY;
+        }
+    case VBUS_UVP:
+        dcdc_off();
+        break;
+    default:
+        state=CAP_OFF;
     }
 }
 
-static void adc_value_conversion(void){
+__STATIC_INLINE void adc_value_conversion(void){
     float i_motor=(adc.i_motor*(V_REF/4095.f)-INA181_REF)*(IMOTOR_CAL*2000.0f/100.0f);
     data.i_motor=i_motor*IIR_C+data.i_motor*(1.0f-IIR_C);
 
-    float i_dcdc=(adc.i_dcdc*(V_REF/4095.f)-INA181_REF)*(2000.0f/100.0f);
-    data.i_dcdc=i_dcdc*IIR_C+data.i_dcdc*(1.0f-IIR_C);
-
-    float i_tot=(adc.i_tot*(V_REF/4095.f)-INA181_REF)*(1000.0f/100.0f);
+    float i_tot=(adc.i_tot*(V_REF/4095.f)-INA181_REF)*(ITOT_CAL*1000.0f/100.0f);
     data.i_tot=i_tot*IIR_C+data.i_tot*(1.0f-IIR_C);
+
+    // float i_dcdc=(adc.i_dcdc*(V_REF/4095.f)-INA181_REF)*(2000.0f/100.0f);
+    // data.i_dcdc=i_dcdc*IIR_C+data.i_dcdc*(1.0f-IIR_C);
+    data.i_dcdc=data.i_tot-data.i_motor;
 
     float v_bus=adc.v_bus*(11.0f*V_REF/4095.f);
     data.v_bus=v_bus*IIR_V+data.v_bus*(1.0f-IIR_V);
@@ -121,6 +234,28 @@ static void adc_value_conversion(void){
 void dcdc_mainISR(void){
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
     adc_value_conversion();
+
+    target_current=total_allow_current-data.i_motor;
+    //calculate target current
+
+    float lim_judge=CAP_MAX_CURRENT*(data.v_cap/data.v_bus);
+    float lim_capfull=(BAT_FULL_VOL-data.v_cap)*7.0f;
+    float lim_caplow=(data.v_cap-BAT_UVP_STARTUP_THRE)*5.0f;
+    
+    float charge_maxi=lim_judge<lim_capfull?lim_judge:lim_capfull;
+    float discharge_maxi=lim_judge<lim_caplow?lim_judge:lim_caplow;
+    if(charge_maxi < 0.0f)charge_maxi=0.0f;
+    if(discharge_maxi < -0.25f)discharge_maxi=-0.25f; 
+
+    set_current=target_current;
+    if(set_current>charge_maxi){
+        set_current=charge_maxi;
+    }else if(set_current<(-discharge_maxi)){
+        set_current=-discharge_maxi;
+    }
+
+
+    cap_state_machine();
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
     return;
 }

@@ -12,12 +12,27 @@
 
 #define toCompareVal(p) ((int)((p/100.0f)*(float)DCDC_PERIOD))
 
+/************SAFETY SETTINGS**********/
+#define BUS_UVP_THRE 18.0f
+#define BUS_OVP_THRE 27.0f
+#define BAT_OVP_THRE 30.0f
+#define BAT_FULL_VOL 26.0f
+#define BAT_UVP_STARTUP_THRE 10.0f
+
+#define PROTECTION_RECOVERY_TIME 2000
+
+#define CAP_MAX_CURRENT 13.8f
+/*************************************/
+
 #define IIR_V 0.05f
 #define IIR_C 0.2f
 #define INA181_REF 1.25f
-#define IMOTOR_CAL 0.83f
+#define IMOTOR_CAL 0.88f
+#define ITOT_CAL 0.98f
 
 #define V_REF (3.00f)
+
+#define DT (1.0f/350000.0f)
 
 typedef struct pwr_adc_t{
     uint16_t i_motor;   //ADC1_IN3 (PA2)
@@ -40,10 +55,28 @@ typedef struct pwr_data_t
     unsigned char tail[4];
 }pwr_data_t;
 
+typedef struct pid_t
+{
+    const float p;
+    const float i;
+    const float d;
+    const float i_max;
+    float errm1;
+    float err_i;
+}PID_t;
+
+enum Cap_states{
+    CAP_OFF,
+    CAP_READY,
+    CAP_ON,
+    VBUS_OVP,
+    VBUS_UVP,
+    VBAT_OVP,
+};
+
 void dcdc_init(void);
 void dcdc_setphase(float percentage);
 void dcdc_setduty(float duty);
-int checkCompVal(int val);
 
 void dcdc_mainISR(void);
 

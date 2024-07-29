@@ -49,7 +49,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+extern float set_current;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -102,18 +102,17 @@ int main(void)
   /* USER CODE BEGIN 2 */
   dcdc_init();
   LL_HRTIM_TIM_CounterEnable(HRTIM1, LL_HRTIM_TIMER_ALL);
-  HAL_GPIO_WritePin(DRV_EN_GPIO_Port, DRV_EN_Pin, SET);
+  set_current=1.5f;
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   { 
-    for(float i=0.f;i<100.0f;i+=0.1f){
-      //dcdc_setduty(i);
-      HAL_Delay(1);
-    }
-    HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+    // HAL_Delay(1);
+    // target_current=1.0f;
+    // HAL_Delay(1);
+    // target_current=4.0f;
     
     /* USER CODE END WHILE */
 
