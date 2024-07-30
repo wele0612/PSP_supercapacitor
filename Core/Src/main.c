@@ -22,6 +22,7 @@
 #include "dma.h"
 #include "fdcan.h"
 #include "hrtim.h"
+#include "iwdg.h"
 #include "spi.h"
 #include "usart.h"
 #include "gpio.h"
@@ -29,6 +30,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "dcdc.h"
+#include "g474_fdcan.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -99,20 +101,25 @@ int main(void)
   MX_ADC1_Init();
   MX_ADC2_Init();
   MX_ADC3_Init();
+  MX_IWDG_Init();
   /* USER CODE BEGIN 2 */
+  HAL_IWDG_Refresh(&hiwdg);
   dcdc_init();
+  HAL_IWDG_Refresh(&hiwdg);
   LL_HRTIM_TIM_CounterEnable(HRTIM1, LL_HRTIM_TIMER_ALL);
+
+
   set_current=1.5f;
+
+  fdcan2_config();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   { 
-    // HAL_Delay(1);
-    // target_current=1.0f;
-    // HAL_Delay(1);
-    // target_current=4.0f;
+    HAL_Delay(10);
+    send_capinfo();
     
     /* USER CODE END WHILE */
 
@@ -137,8 +144,9 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI|RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = RCC_PLLM_DIV3;
@@ -181,6 +189,7 @@ void Error_Handler(void)
   __disable_irq();
   while (1)
   {
+    return;
   }
   /* USER CODE END Error_Handler_Debug */
 }

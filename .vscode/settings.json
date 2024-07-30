@@ -14,6 +14,8 @@
         "battery.h": "c",
         "pwrctl.h": "c",
         "fdcan.h": "c",
-        "hrtim.h": "c"
+        "hrtim.h": "c",
+        "g474_fdcan.h": "c",
+        "cap_canmsg_protocal.h": "c"
     }
 }

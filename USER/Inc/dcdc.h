@@ -3,6 +3,7 @@
 
 #include "adc.h"
 #include "gpio.h"
+#include "iwdg.h"
 #include "hrtim.h"
 #include "usart.h"
 #include <stdint.h>
@@ -22,6 +23,9 @@
 #define PROTECTION_RECOVERY_TIME 2000
 
 #define CAP_MAX_CURRENT 13.8f
+
+#define POWER_LIMIT_MINIMUM 15.0f
+#define POWER_LIMIT_MAXIMUM 350.0f
 /*************************************/
 
 #define IIR_V 0.05f
@@ -52,6 +56,7 @@ typedef struct pwr_data_t
     float i_tot;
     float i_dcdc;
     float i_motor;
+    float i_allow;
     unsigned char tail[4];
 }pwr_data_t;
 
@@ -77,6 +82,8 @@ enum Cap_states{
 void dcdc_init(void);
 void dcdc_setphase(float percentage);
 void dcdc_setduty(float duty);
+
+void dcdc_update_power_limit(float limit);
 
 void dcdc_mainISR(void);
 

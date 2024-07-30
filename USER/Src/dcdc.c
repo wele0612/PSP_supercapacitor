@@ -1,13 +1,18 @@
 #include "dcdc.h"
+#include "cap_canmsg_protocal.h"
 
 pwr_adc_t adc;
 pwr_data_t data={.tail=VOFA_TAIL};
 
 int state=CAP_OFF;
 uint32_t protection_triggered=0;
+
 float set_current=2.5f;  //current to be achieved by PID
 float target_current=1.0f; //dcdc-current required due to power limit
 float total_allow_current=3.0f; //total-current required due to power limit
+float power_limit=30.0f; //power limit
+
+float discharge_maxi;
 
 PID_t _i={
     .p=0.0f,
@@ -63,7 +68,7 @@ void dcdc_init(){
     dcdc_setphase(10.0f);
     dcdc_setduty(45.0f);
 
-    HAL_Delay(200);
+    HAL_Delay(10);
 
     LL_HRTIM_EnableIT_REP(HRTIM1, LL_HRTIM_TIMER_MASTER);
 
@@ -113,11 +118,11 @@ void dcdc_setduty(float duty){
     }
 
     if(duty<50.0f){
-        leftduty=duty*2.0f;
+        leftduty=duty*2.05f;
         rightduty=100.0f;
     }else{
         leftduty=100.0f;
-        rightduty=(100.0f-duty)*2.0f;
+        rightduty=(100.0f-duty)*2.05f;
     }
 
     int comp_left=toCompareVal(leftduty);
@@ -231,10 +236,21 @@ __STATIC_INLINE void adc_value_conversion(void){
     return;
 }
 
+void dcdc_update_power_limit(float limit){
+    if(limit<POWER_LIMIT_MINIMUM){
+        limit=POWER_LIMIT_MINIMUM;
+    }else if(limit>POWER_LIMIT_MAXIMUM){
+        limit=POWER_LIMIT_MAXIMUM;
+    }
+    power_limit=limit;
+}
+
 void dcdc_mainISR(void){
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
     adc_value_conversion();
 
+    total_allow_current=power_limit/data.v_bus;
+    data.i_allow=total_allow_current;
     target_current=total_allow_current-data.i_motor;
     //calculate target current
 
@@ -243,7 +259,7 @@ void dcdc_mainISR(void){
     float lim_caplow=(data.v_cap-BAT_UVP_STARTUP_THRE)*5.0f;
     
     float charge_maxi=lim_judge<lim_capfull?lim_judge:lim_capfull;
-    float discharge_maxi=lim_judge<lim_caplow?lim_judge:lim_caplow;
+    discharge_maxi=lim_judge<lim_caplow?lim_judge:lim_caplow;
     if(charge_maxi < 0.0f)charge_maxi=0.0f;
     if(discharge_maxi < -0.25f)discharge_maxi=-0.25f; 
 
@@ -254,8 +270,10 @@ void dcdc_mainISR(void){
         set_current=-discharge_maxi;
     }
 
+    HAL_IWDG_Refresh(&hiwdg);
 
     cap_state_machine();
+
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
     return;
 }
