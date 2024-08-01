@@ -2,10 +2,11 @@
 #include "cap_canmsg_protocal.h"
 
 pwr_adc_t adc;
-pwr_data_t data={.tail=VOFA_TAIL};
+pwr_data_t data={.v_bus=20.0f, .tail=VOFA_TAIL};
 
 int state=CAP_OFF;
 uint32_t protection_triggered=0;
+uint32_t ready_time=0;
 
 float set_current=2.5f;  //current to be achieved by PID
 float target_current=1.0f; //dcdc-current required due to power limit
@@ -18,7 +19,7 @@ PID_t _i={
     .p=0.0f,
     .i=30000.0f,
     .d=0.0f,
-    .i_max=0.01f,
+    .i_max=0.0035f,
     .errm1=0.0f,
     .err_i=0.0f,
 };
@@ -41,6 +42,8 @@ void dcdc_off(){
 
 void dcdc_init(){
     HAL_GPIO_WritePin(GPIOA, GPIO_PIN_15, SET);
+
+    dcdc_off();
 
     HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
     HAL_ADCEx_Calibration_Start(&hadc2, ADC_SINGLE_ENDED);
@@ -147,6 +150,20 @@ __STATIC_INLINE void pid_reset(){
 }
 
 /**
+ * @brief Reset integral term of DCDC, based on current measure
+ * 
+ * @return __STATIC_INLINE 
+ */
+__STATIC_INLINE void pid_reset_to_voltage(){
+    if(data.v_bus <= data.v_cap){
+        _i.err_i=(50.0f/_i.i);
+    }else{
+        float io_ratio=data.v_cap/(data.v_bus+0.01f); //NEVER divide by zero
+        _i.err_i=100.0f*(io_ratio/_i.i);
+    }
+}
+
+/**
  * @brief Calculate PID for next period.
  * @note This PID controls 
  */
@@ -171,7 +188,7 @@ __STATIC_INLINE void update_pid(){
  * 
  */
 static void cap_state_machine(){
-    //data.state=(float)state*10;
+    data.state=(float)(state*10);
 
     if(data.v_bus > BUS_OVP_THRE){ //BUS over-voltage protection
         state=VBUS_OVP;
@@ -198,8 +215,16 @@ static void cap_state_machine(){
         update_pid();
         break;
     case CAP_READY:
-        dcdc_on();
-        state=CAP_ON;
+        if(ready_time==0){
+            ready_time=HAL_GetTick();
+        }else if(HAL_GetTick()-ready_time < ONTIME_FILTERSTABLE_DELAY){
+            break;
+        }else{
+            ready_time=0;
+            pid_reset_to_voltage();
+            state=CAP_ON;
+            dcdc_on();
+        }
         break;
     case CAP_OFF: //本行疑似bug。暂时似乎没有影响。
     case VBUS_OVP:

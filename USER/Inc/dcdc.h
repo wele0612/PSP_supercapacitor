@@ -26,9 +26,11 @@
 
 #define POWER_LIMIT_MINIMUM 15.0f
 #define POWER_LIMIT_MAXIMUM 350.0f
+
+#define ONTIME_FILTERSTABLE_DELAY 5
 /*************************************/
 
-#define IIR_V 0.05f
+#define IIR_V 0.1f
 #define IIR_C 0.2f
 #define INA181_REF 1.25f
 #define IMOTOR_CAL 0.88f
@@ -57,6 +59,7 @@ typedef struct pwr_data_t
     float i_dcdc;
     float i_motor;
     float i_allow;
+    float state;
     unsigned char tail[4];
 }pwr_data_t;
 
