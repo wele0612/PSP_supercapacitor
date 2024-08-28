@@ -3,7 +3,7 @@
 在RoboMaster赛事中，超级电容模组被用于突破底盘功率限制。电容模组通过“填谷削峰”的方式，在实际功率低时将盈余功率用于充电，在实际功率高时放电。
 
 ### 本工程为Pacific Spirit/五大湖联合的超级电容开源。您可以在附件中的文档内获取详细技术报告和工程说明。 
-### PCB工程位于立创开源平台（OSHWHUB）
+### PCB工程位于[立创开源平台（OSHWHUB）](https://oshwhub.com/ltyxh/psp-zhan-dui-duo-xiang-chao-dian)
 
 工程已上车验证，请放心食用。
 
@@ -16,7 +16,7 @@
 In RoboMaster, supercapacitor modules are used to break through the base power limitations. By “filling in the valleys and shaving the peaks”, the capacitor modules use the surplus power to charge when the motor power is low and discharge when the motor power is high.
 
 ### This project is an open source supercapacitor for Pacific Spirit/Great Lakes Union. You can access the detailed technical report and project description within the attached PDF document. Note: Currently there's only Chinese version avaliable.
-### You can find the PCB project at ``OSHWHUB.com``.
+### You can find the PCB project at ``OSHWHUB.com``.[Link](https://oshwhub.com/ltyxh/psp-zhan-dui-duo-xiang-chao-dian)
 
 The project has been tested on the robot.
 
