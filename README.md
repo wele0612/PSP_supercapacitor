@@ -15,7 +15,7 @@
 # [Robomaster 2024] Open Source Super Capacitor - Team [Pacific Spirit], UBC
 In RoboMaster, supercapacitor modules are used to break through the base power limitations. By “filling in the valleys and shaving the peaks”, the capacitor modules use the surplus power to charge when the motor power is low and discharge when the motor power is high.
 
-### This project is an open source supercapacitor for Pacific Spirit/Great Lakes Union. You can access the detailed technical report and project description within the attached document. Note: Currently there's only Chinese version avaliable.
+### This project is an open source supercapacitor for Pacific Spirit/Great Lakes Union. You can access the detailed technical report and project description within the attached PDF document. Note: Currently there's only Chinese version avaliable.
 ### You can find the PCB project at ``OSHWHUB.com``.
 
 The project has been tested on the robot.
