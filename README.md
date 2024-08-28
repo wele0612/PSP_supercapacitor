@@ -21,3 +21,6 @@ In RoboMaster, supercapacitor modules are used to break through the base power l
 The project has been tested on the robot.
 
 The project documentation is licensed under ``CC-BY-SA`` and the project is licensed under ``GPL3.0``. In short, you are free to use or modify the project, provided you credit the source and open source it under the same license.
+
+
+![oshw_cover](https://github.com/user-attachments/assets/11c34929-6fbd-4c02-ac69-c3f23819f20b)
