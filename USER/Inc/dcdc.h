@@ -15,9 +15,9 @@
 
 /************SAFETY SETTINGS**********/
 #define BUS_UVP_THRE 18.0f
-#define BUS_OVP_THRE 27.0f
+#define BUS_OVP_THRE 28.5f
 #define BAT_OVP_THRE 30.0f
-#define BAT_FULL_VOL 26.0f
+#define BAT_FULL_VOL 23.5f
 #define BAT_UVP_STARTUP_THRE 10.0f
 
 #define PROTECTION_RECOVERY_TIME 2000
@@ -33,7 +33,7 @@
 #define IIR_V 0.1f
 #define IIR_C 0.2f
 #define INA181_REF 1.25f
-#define IMOTOR_CAL 0.88f
+#define IMOTOR_CAL 0.89f
 #define ITOT_CAL 0.98f
 
 #define V_REF (3.00f)

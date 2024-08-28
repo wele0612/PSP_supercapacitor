@@ -6,14 +6,19 @@ pwr_data_t data={.v_bus=20.0f, .tail=VOFA_TAIL};
 
 int state=CAP_OFF;
 uint32_t protection_triggered=0;
+uint32_t powerup_time=0;
 uint32_t ready_time=0;
 
 float set_current=2.5f;  //current to be achieved by PID
 float target_current=1.0f; //dcdc-current required due to power limit
 float total_allow_current=3.0f; //total-current required due to power limit
-float power_limit=30.0f; //power limit
+float power_limit=50.0f; //power limit
 
 float discharge_maxi;
+
+//WARNING: THIS FIRMWARE IS MADE FOR REV.2 VERSION !!!!!!!!!!
+//WARNING: THIS FIRMWARE IS MADE FOR REV.2 VERSION !!!!!!!!!!
+//WARNING: THIS FIRMWARE IS MADE FOR REV.2 VERSION !!!!!!!!!!
 
 PID_t _i={
     .p=0.0f,
@@ -223,6 +228,7 @@ static void cap_state_machine(){
             ready_time=0;
             pid_reset_to_voltage();
             state=CAP_ON;
+            powerup_time=HAL_GetTick();
             dcdc_on();
         }
         break;
@@ -243,13 +249,13 @@ static void cap_state_machine(){
 }
 
 __STATIC_INLINE void adc_value_conversion(void){
-    float i_motor=(adc.i_motor*(V_REF/4095.f)-INA181_REF)*(IMOTOR_CAL*2000.0f/100.0f);
+    float i_motor=(adc.i_motor*(V_REF/4095.f)-INA181_REF)*(IMOTOR_CAL*1000.0f/50.0f);
     data.i_motor=i_motor*IIR_C+data.i_motor*(1.0f-IIR_C);
 
-    float i_tot=(adc.i_tot*(V_REF/4095.f)-INA181_REF)*(ITOT_CAL*1000.0f/100.0f);
+    float i_tot=(adc.i_tot*(V_REF/4095.f)-INA181_REF)*(ITOT_CAL*1000.0f/50.0f);
     data.i_tot=i_tot*IIR_C+data.i_tot*(1.0f-IIR_C);
 
-    // float i_dcdc=(adc.i_dcdc*(V_REF/4095.f)-INA181_REF)*(2000.0f/100.0f);
+    // float i_dcdc=(adc.i_dcdc*(V_REF/4095.f)-INA181_REF)*(1000.0f/100.0f);
     // data.i_dcdc=i_dcdc*IIR_C+data.i_dcdc*(1.0f-IIR_C);
     data.i_dcdc=data.i_tot-data.i_motor;
 
@@ -277,6 +283,10 @@ void dcdc_mainISR(void){
     total_allow_current=power_limit/data.v_bus;
     data.i_allow=total_allow_current;
     target_current=total_allow_current-data.i_motor;
+
+    if(HAL_GetTick()-powerup_time < 100){
+        target_current=0.0f;
+    }
     //calculate target current
 
     float lim_judge=CAP_MAX_CURRENT*(data.v_cap/data.v_bus);
@@ -297,8 +307,10 @@ void dcdc_mainISR(void){
 
     HAL_IWDG_Refresh(&hiwdg);
 
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
+
     cap_state_machine();
 
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
+    
     return;
 }
