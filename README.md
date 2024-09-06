@@ -3,7 +3,7 @@
 在RoboMaster赛事中，超级电容模组被用于突破底盘功率限制。电容模组通过“填谷削峰”的方式，在实际功率低时将盈余功率用于充电，在实际功率高时放电。
 
 本超级电容使用多相并联四开源Buck-Boost架构，最大功率1200w（20V/60A），电流调整动态响应时间在十~百us级。支持CAN通信，通信协议详见``USER/Inc/cap_canmsg_protocal.h``. 本工程用户代码和CubeMX生成代码为尽可能解耦的形式，主要控制代码位于``USER``文件夹中。
-yy
+
 #### 您可以在附件中的文档内获取详细技术报告、工程说明和硬件测试报告。 
 #### 原理图PCB工程位于[立创开源平台（OSHWHUB）](https://oshwhub.com/ltyxh/psp-zhan-dui-duo-xiang-chao-dian)
 #### 您可以在这里找到使用[演示视频-Bilibili](https://www.bilibili.com/video/BV1VtHreHE9r)
