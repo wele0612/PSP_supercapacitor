@@ -57,8 +57,10 @@ INTERFACE = YOUR DEBUGGER. Example: stlink-v2
 ```
 然后，可以这样：
 
-![图片](https://github.com/wele0612/ELEC291-Car-firmware/assets/59970710/cc12c696-5bdf-41e4-a68a-3f24e03480c3)
-![图片](https://github.com/wele0612/ELEC291-Car-firmware/assets/59970710/5dceaed0-92b0-42b1-aff6-18c6b46943c2)
+![图片](https://github.com/user-attachments/assets/12337571-52ef-417b-bfb9-2b61b50ccb31)
+
+![图片](https://github.com/user-attachments/assets/9e7da938-75a6-4fb1-ac71-7e1215893b5a)
+
 
 当然，也可以直接在shell中输入`make`编译，或使用
 ```makefile
