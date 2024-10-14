@@ -67,6 +67,39 @@ INTERFACE = YOUR DEBUGGER. Example: stlink-v2
 make -f flash.mk
 ```
 编译并下载到单片机。
+## 调试
+首先，请在VScode的插件市场中安装`cortex-debug`插件。
+
+![图片](https://github.com/user-attachments/assets/678fb78e-b98d-450f-a36c-37499e926dc5)
+
+在项目的`.vscode`文件夹中新建一个`launch.json`文件。在文件中加入以下内容：
+
+```
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "cwd": "${workspaceRoot}",
+            "executable": "./build/{你的项目名称，例如supercapv4}.elf",
+            "name": "Debug with OpenOCD",
+            "request": "launch",
+            "type": "cortex-debug",
+            "servertype": "openocd",
+            "configFiles": [
+                "{OPENOCD文件夹}/share/openocd/scripts/interface/{你的调试器，如cmsis-dap}.cfg",
+                "{OPENOCD文件夹}/share/openocd/scripts/target/{你的MCU，如stm32g4x}.cfg"
+            ],
+            "searchDir": [],
+            "runToEntryPoint": "main",
+            "showDevDebugOutput": "none"
+        }
+    ]
+}
+```
+在下载固件到单片机后，你可以这样启动调试：
+
+![图片](https://github.com/user-attachments/assets/825daeaa-3938-48c7-8c08-9bbb622775e8)
+
 
 ## 许可证
 
