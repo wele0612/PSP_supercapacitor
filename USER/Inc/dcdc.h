@@ -36,7 +36,7 @@
 #define IMOTOR_CAL 0.89f
 #define ITOT_CAL 0.98f
 
-#define V_REF (3.00f)
+#define V_REF (3.30f)
 
 #define DT (1.0f/350000.0f)
 
