@@ -58,6 +58,8 @@ TARGET = YOUR MCU. Example: stm32g4x
 INTERFACE = YOUR DEBUGGER. Example: stlink-v2
 ...
 ```
+TARGET需要匹配编译出的ELF的文件名，否则会找不到文件。
+本工程中可能已经为你改好了。
 然后，可以这样：
 
 ![图片](https://github.com/user-attachments/assets/12337571-52ef-417b-bfb9-2b61b50ccb31)
