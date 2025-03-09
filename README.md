@@ -50,7 +50,7 @@ OPENOCD可以从[这个release页面](https://github.com/openocd-org/openocd/rel
 2. 创建名为`OPENOCD_HOME`的环境变量。变量值为解压后的OPENOCD文件夹路径。
 
 #### 下载程序到MCU
-修改`Makefile`中的这三行为你的项目名，下载器接口和单片机型号。
+修改`flash.mk`中的这三行为你的项目名，下载器接口和单片机型号。
 ```makefile
 ...
 PROJECT = YOUR PROJECT NAME.
